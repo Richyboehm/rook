@@ -96,6 +96,10 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSToo
         findBar.edgeInsets = NSEdgeInsets(top: 4, left: 10, bottom: 4, right: 10)
         findBar.isHidden = true
 
+        // Same dark as the start page, so a new tab never flashes white while it loads.
+        webContainer.wantsLayer = true
+        webContainer.layer?.backgroundColor = NSColor(srgbRed: 11 / 255, green: 11 / 255, blue: 13 / 255, alpha: 1).cgColor
+
         let stack = NSStackView(views: [tabBar, findBar, webContainer])
         stack.orientation = .vertical
         stack.spacing = 0

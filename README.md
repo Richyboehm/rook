@@ -137,6 +137,7 @@ To add a search engine, extend `ENGINES` in `app.js`. To change the suggested fa
 ## Credits
 
 The backgrounds *Obsidian*, *Aurora*, *Ember* and *Midnight* were generated for Rook and are covered by the same license as the code.
+The background *Skulptur* is a photo from [Unsplash](https://unsplash.com) under the [Unsplash License](https://unsplash.com/license).
 
 ## License
 

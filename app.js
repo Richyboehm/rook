@@ -144,6 +144,7 @@
 
   var BACKGROUNDS = [
     { id: "obsidian", name: "Obsidian" },
+    { id: "sculpture", name: "Skulptur" },
     { id: "aurora", name: "Aurora" },
     { id: "ember", name: "Ember" },
     { id: "midnight", name: "Midnight" }

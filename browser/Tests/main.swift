@@ -119,6 +119,14 @@ blocker.setList("boese-liste", enabled: false)
 check(!blocker.disabledLists.contains("boese-liste"), "Unbekannte Liste wird ignoriert")
 blocker.disabledLists = listsBefore
 
+// MARK: New tabs
+
+let startTab = BrowserTab(isPrivate: false)
+check((startTab.webView.value(forKey: "drawsBackground") as? Bool) == false, "Neuer Tab mit Startseite blitzt nicht weiß auf")
+let blankTab = BrowserTab(url: nil, isPrivate: false)
+check((blankTab.webView.value(forKey: "drawsBackground") as? Bool) != false, "Websites behalten ihren normalen weißen Grund")
+startTab.close(); blankTab.close()
+
 // MARK: Settings interface: only the start page may use it
 
 func apiRequest(_ url: String, from page: String?) -> URLRequest {

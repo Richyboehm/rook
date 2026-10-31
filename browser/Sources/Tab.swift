@@ -26,6 +26,7 @@ final class BrowserTab: NSObject, WKNavigationDelegate, WKUIDelegate {
         let config = configuration ?? (isPrivate ? Rook.privateConfiguration : Rook.configuration)
         webView = WKWebView(frame: .zero, configuration: config)
         super.init()
+        if url?.scheme == "rook" { paintsWhite(false) }
         webView.navigationDelegate = self
         webView.uiDelegate = self
         webView.allowsBackForwardNavigationGestures = true
@@ -93,7 +94,17 @@ final class BrowserTab: NSObject, WKNavigationDelegate, WKUIDelegate {
 
     func load(_ url: URL) {
         failedURL = nil
+        if url.scheme == "rook" { paintsWhite(false) }
         webView.load(URLRequest(url: url))
+    }
+
+    /// WebKit paints a white page until the first content arrives, which flashes in every new tab.
+    /// The start page is dark, so there the web view stays transparent and the dark window shows through.
+    /// Websites keep the normal white background (many rely on it).
+    private func paintsWhite(_ white: Bool) {
+        guard webView.responds(to: NSSelectorFromString("_setDrawsBackground:"))
+            || webView.responds(to: NSSelectorFromString("setDrawsBackground:")) else { return }
+        webView.setValue(white, forKey: "drawsBackground")
     }
 
     func reload() {
@@ -219,6 +230,7 @@ final class BrowserTab: NSObject, WKNavigationDelegate, WKUIDelegate {
 
     func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
         if webView.url?.absoluteString != "about:blank" { failedURL = nil }
+        paintsWhite(webView.url?.scheme != "rook")
         // Remembered zoom level of this website.
         webView.pageZoom = (isPrivate ? nil : Settings.site(webView.url).flatMap(Settings.zoom(for:))) ?? 1
         favicon = nil
