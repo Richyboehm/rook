@@ -13,6 +13,10 @@
   <img src="assets/screenshot.png" alt="Rook new tab page with clock, search bar and favorites" width="800">
 </p>
 
+<p align="center">
+  <a href="https://richyboehm.github.io/rook/download/"><b>Download Rook for Mac</b></a>
+</p>
+
 ## Why Rook?
 
 Most new tab pages are either plain or full of news, ads and tracking. Rook gives you a polished, Apple-style start page while your browser keeps doing what it does best: security, passwords, sync and updates.
@@ -97,6 +101,11 @@ open build/Rook.app
 Then move `Rook.app` into your Applications folder. Because you built it yourself, macOS opens it without a warning.
 
 **Tests:** `browser/Tests/run.sh` (logic: address bar, link safety, downloads, filter conversion) and `browser/Tests/run-blocker.sh` (downloads the real filter lists and checks with the real WebKit engine that ads and trackers are blocked and that per-site exceptions work).
+
+### Download page
+
+The page in `download/` (online at https://richyboehm.github.io/rook/download/) offers `download/Rook.dmg`.
+After a change to the app, run `browser/build.sh`, then `browser/make-dmg.sh`, and commit the new `Rook.dmg`.
 
 ## Keyboard shortcuts
 
