@@ -11,10 +11,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.mainMenu = makeMenu()
         ContentBlocker.shared.start()
-        NSWindow.allowsAutomaticWindowTabbing = true
+        NSWindow.allowsAutomaticWindowTabbing = false   // Rook has its own tab bar
         DownloadManager.shared.webViewProvider = {
             ((NSApp.keyWindow?.windowController as? BrowserWindowController) ?? BrowserWindowController.all.first)?.webView
         }
+        HistoryWindowController.shared.open = { [weak self] url in self?.open(url) }
         launched = true
 
         restoreSession()
@@ -25,6 +26,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         // Save open tabs regularly, so they survive a crash or power loss too.
         sessionTimer = Timer.scheduledTimer(withTimeInterval: 20, repeats: true) { _ in Session.save() }
         sessionTimer?.tolerance = 5
+
+        if !Settings.welcomeShown {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { [weak self] in self?.showWelcome() }
+        }
+    }
+
+    /// First start: offer to make Rook the default browser and to import bookmarks.
+    private func showWelcome() {
+        Settings.welcomeShown = true
+        guard let window = current?.window else { return }
+        let alert = NSAlert()
+        alert.messageText = "Willkommen bei Rook"
+        alert.informativeText = "Rook nutzt die Safari-Engine, blockiert Werbung und Tracker und speichert alles nur auf diesem Mac.\n\nMöchtest du Rook als Standardbrowser verwenden? Links aus anderen Apps öffnen sich dann in Rook."
+        alert.addButton(withTitle: "Als Standardbrowser verwenden")
+        alert.addButton(withTitle: "Lesezeichen importieren …")
+        alert.addButton(withTitle: "Später")
+        alert.beginSheetModal(for: window) { [weak self] response in
+            switch response {
+            case .alertFirstButtonReturn: Settings.makeDefaultBrowser()
+            case .alertSecondButtonReturn: DispatchQueue.main.async { self?.importBookmarks() }
+            default: break
+            }
+        }
     }
 
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
@@ -61,42 +85,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             ?? BrowserWindowController.all.last { !$0.isPrivate }
     }
 
+    /// Opens an address as a new tab in the front (normal) window.
     private func open(_ url: URL) {
         // Links from other apps never end up in a private window.
         if let current, !current.isPrivate {
-            current.openAsTab(BrowserWindowController(url: url))
+            current.openTab(url: url, configuration: nil, background: false)
+            current.window?.makeKeyAndOrderFront(nil)
         } else {
-            BrowserWindowController(url: url).showWindow(nil)
+            BrowserWindowController(urls: [url]).showWindow(nil)
         }
         NSApp.activate(ignoringOtherApps: true)
     }
 
     private func restoreSession() {
-        for group in Session.load() {
-            let first = BrowserWindowController(url: group[0])
-            first.window?.tabbingMode = .disallowed
-            first.showWindow(nil)
-            first.window?.tabbingMode = .preferred
-            for url in group.dropFirst() {
-                first.openAsTab(BrowserWindowController(url: url), inBackground: true)
-            }
+        guard Settings.restoreSession else { return }
+        for group in Session.load().reversed() {
+            BrowserWindowController(urls: group.urls, pinned: group.pinned).showWindow(nil)
         }
     }
 
-    @objc func openWindow() {
-        show(BrowserWindowController())
-    }
-
-    @objc func openPrivateWindow() {
-        show(BrowserWindowController(isPrivate: true))
-    }
-
-    private func show(_ controller: BrowserWindowController) {
-        guard let window = controller.window else { return }
-        window.tabbingMode = .disallowed      // a real new window …
-        controller.showWindow(nil)
-        window.tabbingMode = .preferred       // … but later tabs may join it
-    }
+    @objc func openWindow() { BrowserWindowController().showWindow(nil) }
+    @objc func openPrivateWindow() { BrowserWindowController(isPrivate: true).showWindow(nil) }
 
     @objc func newTab() {
         if let current { current.newTab() } else { openWindow() }
@@ -104,60 +113,49 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     @objc func reopenClosedTab() {
         guard let url = BrowserWindowController.closedTabs.popLast() else { NSSound.beep(); return }
-        let tab = BrowserWindowController(url: url)
-        if let current, !current.isPrivate { current.openAsTab(tab) } else { show(tab) }
+        open(url)
     }
 
     @objc func selectTab(_ sender: NSMenuItem) {
-        guard let window = NSApp.keyWindow else { return }
-        let tabs = window.tabbedWindows ?? [window]
-        let index = sender.tag == 9 ? tabs.count - 1 : sender.tag - 1   // ⌘9 = last tab, like Safari
-        if tabs.indices.contains(index) { tabs[index].makeKeyAndOrderFront(nil) }
+        current?.selectTab(number: sender.tag)
     }
 
     @objc func openHistoryItem(_ sender: NSMenuItem) {
         guard let url = sender.representedObject as? URL else { return }
-        if let current { current.load(url) } else { open(url) }
+        if let tab = current?.currentTab { tab.load(url) } else { open(url) }
     }
 
-    @objc func clearHistory() {
+    @objc func showHistory() { HistoryWindowController.shared.show() }
+    @objc func clearHistory() { Privacy.confirmClearHistory(in: NSApp.keyWindow) }
+    @objc func clearWebsiteData() { Privacy.confirmClearWebsiteData(in: NSApp.keyWindow) }
+    @objc func makeDefaultBrowser() { Settings.makeDefaultBrowser() }
+    @objc func showSettings() {
+        if let current { current.showSettings() } else { BrowserWindowController(urls: [URL(string: "rook://start/#settings")!]).showWindow(nil) }
+    }
+
+    /// Imports bookmarks from an HTML file (Safari: Ablage › Exportieren › Lesezeichen;
+    /// Chrome: Lesezeichen-Manager › Lesezeichen exportieren).
+    @objc func importBookmarks() {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.html]
+        panel.message = "Wähle eine Lesezeichen-Datei (HTML). In Safari: Ablage › Exportieren › Lesezeichen …"
+        panel.prompt = "Importieren"
+        guard panel.runModal() == .OK, let url = panel.url,
+              let html = try? String(contentsOf: url, encoding: .utf8) else { return }
+        let count = Favorites.importBookmarks(html: html)
         let alert = NSAlert()
-        alert.messageText = "Verlauf löschen?"
-        alert.informativeText = "Alle besuchten Seiten und die Liste geschlossener Tabs werden von diesem Mac entfernt. Cookies und Anmeldungen bleiben erhalten."
-        alert.addButton(withTitle: "Löschen")
-        alert.addButton(withTitle: "Abbrechen")
-        guard alert.runModal() == .alertFirstButtonReturn else { return }
-        History.shared.clear()
-        BrowserWindowController.closedTabs.removeAll()
-    }
-
-    @objc func clearWebsiteData() {
-        let alert = NSAlert()
-        alert.messageText = "Cookies und Website-Daten löschen?"
-        alert.informativeText = "Du wirst auf allen Websites abgemeldet, und gespeicherte Website-Daten sowie der Cache werden gelöscht. Deine Rook-Startseite (Favoriten, Einstellungen) bleibt erhalten."
-        alert.addButton(withTitle: "Löschen")
-        alert.addButton(withTitle: "Abbrechen")
-        guard alert.runModal() == .alertFirstButtonReturn else { return }
-        let store = WKWebsiteDataStore.default()
-        let types = WKWebsiteDataStore.allWebsiteDataTypes()
-        store.fetchDataRecords(ofTypes: types) { records in
-            // The start page lives under rook:// – keep it.
-            let websites = records.filter { !Rook.isStartPageRecord($0.displayName) }
-            store.removeData(ofTypes: types, for: websites) {}
-        }
-    }
-
-    @objc func makeDefaultBrowser() {
-        let app = Bundle.main.bundleURL
-        NSWorkspace.shared.setDefaultApplication(at: app, toOpenURLsWithScheme: "http") { _ in
-            NSWorkspace.shared.setDefaultApplication(at: app, toOpenURLsWithScheme: "https") { _ in }
-        }
+        alert.messageText = count == 0 ? "Keine neuen Lesezeichen gefunden" : "\(count) Lesezeichen importiert"
+        alert.informativeText = count == 0
+            ? "Die Datei enthielt keine Webadressen, oder sie sind schon in deinen Favoriten."
+            : "Sie erscheinen beim nächsten neuen Tab auf deiner Startseite. Die Startseite zeigt höchstens 60 Favoriten, Ordner werden nicht übernommen."
+        alert.runModal()
+        newTab()
     }
 
     // MARK: Protection menu (ad & tracker blocker)
 
     private var currentPageURL: URL? {
-        (NSApp.keyWindow?.windowController as? BrowserWindowController)?.webView.url
+        (NSApp.keyWindow?.windowController as? BrowserWindowController)?.currentTab?.displayURL
     }
 
     private func updateProtectionMenu() {
@@ -220,7 +218,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     private func reloadCurrentTab() {
-        (NSApp.keyWindow?.windowController as? BrowserWindowController)?.webView.reload()
+        (NSApp.keyWindow?.windowController as? BrowserWindowController)?.webView?.reload()
     }
 
     // MARK: History menu (filled when opened)
@@ -248,6 +246,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             item.toolTip = entry.url.absoluteString
         }
         menu.addItem(.separator())
+        item(menu, "Gesamten Verlauf anzeigen", #selector(showHistory), "y", target: self)
         item(menu, "Verlauf löschen …", #selector(clearHistory), "", target: self)
         item(menu, "Cookies und Website-Daten löschen …", #selector(clearWebsiteData), "", target: self)
     }
@@ -260,6 +259,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let app = submenu(main, "Rook")
         app.addItem(withTitle: "Über Rook", action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: "")
         app.addItem(.separator())
+        item(app, "Einstellungen …", #selector(showSettings), ",", target: self)
         item(app, "Rook als Standardbrowser festlegen …", #selector(makeDefaultBrowser), "", target: self)
         app.addItem(.separator())
         app.addItem(withTitle: "Rook ausblenden", action: #selector(NSApplication.hide(_:)), keyEquivalent: "h")
@@ -276,8 +276,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         priv.keyEquivalentModifierMask = [.command, .shift]
         item(file, "Adresse öffnen …", #selector(BrowserWindowController.focusAddress), "l")
         item(file, "Tab duplizieren", #selector(BrowserWindowController.duplicateTab), "")
+        item(file, "Tab anheften / lösen", #selector(BrowserWindowController.togglePinCurrentTab), "")
         file.addItem(.separator())
-        item(file, "Tab schließen", #selector(NSWindow.performClose(_:)), "w")
+        item(file, "Tab schließen", #selector(BrowserWindowController.closeCurrentTab), "w")
+        let closeWindow = item(file, "Fenster schließen", #selector(NSWindow.performClose(_:)), "w")
+        closeWindow.keyEquivalentModifierMask = [.command, .shift]
+        file.addItem(.separator())
+        item(file, "Zu Favoriten hinzufügen", #selector(BrowserWindowController.addToFavorites), "d")
+        item(file, "Lesezeichen importieren …", #selector(importBookmarks), "", target: self)
         file.addItem(.separator())
         item(file, "Drucken …", #selector(BrowserWindowController.printPage), "p")
 
@@ -322,10 +328,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         window.addItem(withTitle: "Im Dock ablegen", action: #selector(NSWindow.performMiniaturize(_:)), keyEquivalent: "m")
         window.addItem(withTitle: "Zoomen", action: #selector(NSWindow.performZoom(_:)), keyEquivalent: "")
         window.addItem(.separator())
-        let next = window.addItem(withTitle: "Nächster Tab", action: #selector(NSWindow.selectNextTab(_:)), keyEquivalent: "\t")
+        let next = item(window, "Nächster Tab", #selector(BrowserWindowController.showNextTab), "\t")
         next.keyEquivalentModifierMask = [.control]
-        let previous = window.addItem(withTitle: "Vorheriger Tab", action: #selector(NSWindow.selectPreviousTab(_:)), keyEquivalent: "\t")
+        let previous = item(window, "Vorheriger Tab", #selector(BrowserWindowController.showPreviousTab), "\t")
         previous.keyEquivalentModifierMask = [.control, .shift]
+        let next2 = item(window, "Nächster Tab", #selector(BrowserWindowController.showNextTab), "}")
+        next2.isAlternate = false
+        next2.isHidden = true
+        next2.allowsKeyEquivalentWhenHidden = true
+        let previous2 = item(window, "Vorheriger Tab", #selector(BrowserWindowController.showPreviousTab), "{")
+        previous2.isHidden = true
+        previous2.allowsKeyEquivalentWhenHidden = true
         for n in 1...9 {
             let tab = item(window, n == 9 ? "Letzter Tab" : "Tab \(n)", #selector(selectTab(_:)), "\(n)", target: self)
             tab.tag = n

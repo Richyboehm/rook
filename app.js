@@ -33,7 +33,29 @@
       engineTitle: "Choose your search engine", engineText: "You can change this anytime in the settings.",
       bgTitle: "Pick a background", bgText: "Or use one of your own photos.",
       favTitle: "Your favorites", favText: "Tap to select the sites you use most. You can add your own later.",
-      settingsLabel: "Settings", privateEngine: "private", treesEngine: "plants trees"
+      settingsLabel: "Settings", privateEngine: "private", treesEngine: "plants trees",
+      recent: "Recently visited", weather: "Weather", showWeather: "Show weather", weatherCity: "City",
+      weatherHint: "For this, your city is sent to open-meteo.com (free weather service, no account). Off by default.",
+      weatherError: "Weather not available",
+      tabLook: "Look", tabStart: "Start page", tabBrowser: "Browser", tabPrivacy: "Privacy",
+      background: "Background", greetingTitle: "Greeting", startContent: "Shown on the start page",
+      showFavs: "Favorites", showRecent: "Recently visited",
+      downloads: "Downloads", downloadFolder: "Save to", change: "Change …", showInFinder: "Show in Finder",
+      standardFolder: "Default", askWhereToSave: "Ask where to save every download",
+      downloadsHint: "Downloads are never opened automatically. macOS checks them the first time you open them.",
+      tabsTitle: "Tabs", restoreSession: "Reopen the tabs from last time when Rook starts",
+      defaultBrowser: "Default browser", isDefault: "Rook is your default browser.", notDefault: "Another browser is your default browser.",
+      makeDefault: "Make Rook the default browser", importBookmarks: "Import bookmarks …",
+      appOnlyHint: "Downloads, ad blocker and history settings are available in the Rook app for Mac.",
+      blocker: "Ad & tracker blocker", blockerToggle: "Block ads and trackers", updateLists: "Update filter lists now",
+      updating: "Updating …", exceptions: "Not blocked on these sites", noExceptions: "None – blocking everywhere",
+      remove: "Remove", historyTitle: "History & website data", historyInfo: "{n} pages in your history.",
+      clearHistory: "Delete history completely", clearData: "Delete cookies & website data",
+      confirmClearHistory: "Delete your entire history? Visited pages, recently closed tabs, address bar suggestions and “Recently visited” are removed from this Mac. This cannot be undone.",
+      confirmClearData: "Delete all cookies and website data? You will be signed out of all websites. Your start page stays as it is.",
+      historyCleared: "History deleted.", dataCleared: "Cookies and website data deleted.",
+      sitePermissions: "Camera, microphone & zoom per website", noSitePermissions: "No website settings yet",
+      camera: "Camera", microphone: "Microphone", allowed: "allowed", denied: "denied", zoom: "Zoom", reset: "Reset"
     },
     de: {
       searchWith: "Mit {engine} suchen oder Adresse eingeben",
@@ -57,7 +79,29 @@
       engineTitle: "Wähle deine Suchmaschine", engineText: "Das kannst du jederzeit in den Einstellungen ändern.",
       bgTitle: "Such dir einen Hintergrund aus", bgText: "Oder nimm ein eigenes Foto.",
       favTitle: "Deine Favoriten", favText: "Tippe die Seiten an, die du am meisten nutzt. Eigene kannst du später ergänzen.",
-      settingsLabel: "Einstellungen", privateEngine: "privat", treesEngine: "pflanzt Bäume"
+      settingsLabel: "Einstellungen", privateEngine: "privat", treesEngine: "pflanzt Bäume",
+      recent: "Zuletzt besucht", weather: "Wetter", showWeather: "Wetter anzeigen", weatherCity: "Stadt",
+      weatherHint: "Dafür wird deine Stadt an open-meteo.com geschickt (kostenloser Wetterdienst, kein Konto). Standardmäßig aus.",
+      weatherError: "Wetter nicht verfügbar",
+      tabLook: "Aussehen", tabStart: "Startseite", tabBrowser: "Browser", tabPrivacy: "Datenschutz",
+      background: "Hintergrund", greetingTitle: "Begrüßung", startContent: "Auf der Startseite anzeigen",
+      showFavs: "Favoriten", showRecent: "Zuletzt besucht",
+      downloads: "Downloads", downloadFolder: "Speichern in", change: "Ändern …", showInFinder: "Im Finder zeigen",
+      standardFolder: "Standard", askWhereToSave: "Vor jedem Download fragen, wo gespeichert wird",
+      downloadsHint: "Downloads werden nie automatisch geöffnet. macOS prüft sie beim ersten Öffnen.",
+      tabsTitle: "Tabs", restoreSession: "Tabs vom letzten Mal beim Start wieder öffnen",
+      defaultBrowser: "Standardbrowser", isDefault: "Rook ist dein Standardbrowser.", notDefault: "Ein anderer Browser ist dein Standardbrowser.",
+      makeDefault: "Rook als Standardbrowser festlegen", importBookmarks: "Lesezeichen importieren …",
+      appOnlyHint: "Einstellungen zu Downloads, Werbeblocker und Verlauf gibt es in der Rook-App für den Mac.",
+      blocker: "Werbe- und Trackingschutz", blockerToggle: "Werbung und Tracker blockieren", updateLists: "Filterlisten jetzt aktualisieren",
+      updating: "Wird aktualisiert …", exceptions: "Auf diesen Websites nicht blockieren", noExceptions: "Keine – überall wird blockiert",
+      remove: "Entfernen", historyTitle: "Verlauf und Website-Daten", historyInfo: "{n} Seiten im Verlauf.",
+      clearHistory: "Verlauf restlos löschen", clearData: "Cookies und Website-Daten löschen",
+      confirmClearHistory: "Den gesamten Verlauf löschen? Besuchte Seiten, zuletzt geschlossene Tabs, Vorschläge in der Adressleiste und „Zuletzt besucht“ werden von diesem Mac entfernt. Das lässt sich nicht rückgängig machen.",
+      confirmClearData: "Alle Cookies und Website-Daten löschen? Du wirst auf allen Websites abgemeldet. Deine Startseite bleibt, wie sie ist.",
+      historyCleared: "Verlauf gelöscht.", dataCleared: "Cookies und Website-Daten gelöscht.",
+      sitePermissions: "Kamera, Mikrofon und Zoom pro Website", noSitePermissions: "Noch keine Website-Einstellungen",
+      camera: "Kamera", microphone: "Mikrofon", allowed: "erlaubt", denied: "abgelehnt", zoom: "Zoom", reset: "Zurücksetzen"
     }
   };
 
@@ -118,7 +162,8 @@
     var lang = detectLang();
     return {
       version: 1, onboarded: false, lang: "auto", name: "", showClock: true,
-      engine: "google", bg: "obsidian", dim: 30, accent: ACCENTS[0], icons: true,
+      engine: "google", engineChangedAt: 0, bg: "obsidian", dim: 30, accent: ACCENTS[0], icons: true,
+      weatherOn: false, weatherCity: "", showFavs: true, showRecent: true,
       favorites: presets(lang).filter(function (p) { return DEFAULT_PICKS.indexOf(p.name) >= 0; })
     };
   }
@@ -137,6 +182,11 @@
     s.dim = typeof raw.dim === "number" && raw.dim >= 0 && raw.dim <= 80 ? raw.dim : d.dim;
     s.accent = /^#[0-9a-f]{6}$/i.test(raw.accent) ? raw.accent : d.accent;
     s.icons = typeof raw.icons === "boolean" ? raw.icons : d.icons;
+    s.engineChangedAt = typeof raw.engineChangedAt === "number" ? raw.engineChangedAt : 0;
+    s.weatherOn = raw.weatherOn === true;
+    s.showFavs = raw.showFavs !== false;
+    s.showRecent = raw.showRecent !== false;
+    s.weatherCity = typeof raw.weatherCity === "string" ? raw.weatherCity.slice(0, 60) : "";
     s.favorites = Array.isArray(raw.favorites) ? raw.favorites.map(function (f) {
       var url = f && safeUrl(f.url);
       return url && typeof f.name === "string" && f.name.trim() ? { name: f.name.trim().slice(0, 40), url: url } : null;
@@ -252,6 +302,8 @@
   function renderFavs() {
     var box = $("favs");
     box.textContent = "";
+    box.hidden = !state.showFavs;
+    if (!state.showFavs) return;
     state.favorites.forEach(function (f, i) {
       var item = el("div", "fav");
       item.draggable = true;
@@ -424,6 +476,10 @@
     $("sEngine").value = state.engine;
     $("sDim").value = state.dim;
     $("sIcons").checked = state.icons;
+    $("sShowFavs").checked = state.showFavs;
+    $("sShowRecent").checked = state.showRecent;
+    $("sWeather").checked = state.weatherOn;
+    $("sCity").value = state.weatherCity;
     renderBgPicker($("sBgs"), state.bg, function (id) { state.bg = id; save(); applyLook(); renderSettings(); });
     var sw = $("sAccent");
     sw.textContent = "";
@@ -438,12 +494,217 @@
     });
   }
 
-  $("gear").addEventListener("click", function () { renderSettings(); show("setDialog"); });
+  $("gear").addEventListener("click", function () { openSettings(); });
   $("sClose").addEventListener("click", function () { hide("setDialog"); });
+
+  // Tabs inside the settings (the last one used is remembered).
+  var PANE_KEY = "rook.settingsPane";
+  function showPane(name) {
+    document.querySelectorAll("#sTabs button").forEach(function (b) {
+      var on = b.getAttribute("data-pane") === name;
+      b.classList.toggle("on", on);
+      b.setAttribute("aria-selected", on ? "true" : "false");
+    });
+    document.querySelectorAll(".pane").forEach(function (p) { p.classList.toggle("on", p.getAttribute("data-pane") === name); });
+    try { localStorage.setItem(PANE_KEY, name); } catch (e) {}
+    if (name === "browser" || name === "privacy") loadBrowserSettings();
+  }
+  document.querySelectorAll("#sTabs button").forEach(function (b) {
+    b.addEventListener("click", function () { showPane(b.getAttribute("data-pane")); });
+  });
+
+  function openSettings(pane) {
+    renderSettings();
+    var last = null;
+    try { last = localStorage.getItem(PANE_KEY); } catch (e) {}
+    showPane(pane || last || "look");
+    show("setDialog");
+  }
+
+  // ---------------------------------------------------------------- browser settings (inside the app)
+
+  function api(path) {
+    return fetch("api/" + path, { cache: "no-store" }).then(function (r) { return r.json(); });
+  }
+
+  function loadBrowserSettings() {
+    if (!inApp) return;
+    api("settings.json").then(showBrowserSettings).catch(function () {});
+  }
+
+  function showBrowserSettings(s) {
+    if (!s || !s.app) return;
+    $("sFolder").textContent = s.downloadFolder;
+    $("sFolder").title = s.downloadFolder;
+    $("sFolderReset").hidden = s.downloadFolderIsDefault;
+    $("sAsk").checked = s.askWhereToSave;
+    $("sRestore").checked = s.restoreSession;
+    $("sDefaultStatus").textContent = s.isDefaultBrowser ? t("isDefault") : t("notDefault");
+    $("sMakeDefault").hidden = s.isDefaultBrowser;
+    $("sBlocker").checked = s.blocker.enabled;
+    $("sBlockerStatus").textContent = s.blocker.status;
+    $("sHistoryInfo").textContent = t("historyInfo", { n: s.historyCount });
+
+    var ex = $("sExceptions");
+    ex.textContent = "";
+    if (!s.blocker.exceptions.length) ex.appendChild(el("li", "empty", t("noExceptions")));
+    s.blocker.exceptions.forEach(function (site) {
+      var li = el("li");
+      li.appendChild(el("span", "grow", site));
+      var b = el("button", "btn", t("remove"));
+      b.type = "button";
+      b.addEventListener("click", function () { api("blocker-remove-exception?site=" + encodeURIComponent(site)).then(showBrowserSettings); });
+      li.appendChild(b);
+      ex.appendChild(li);
+    });
+
+    var sites = $("sSites");
+    sites.textContent = "";
+    if (!s.sites.length) sites.appendChild(el("li", "empty", t("noSitePermissions")));
+    s.sites.forEach(function (x) {
+      var li = el("li");
+      li.appendChild(el("span", "grow", x.site));
+      var parts = [];
+      if (x.camera) parts.push(t("camera") + " " + t(x.camera === "allow" ? "allowed" : "denied"));
+      if (x.microphone) parts.push(t("microphone") + " " + t(x.microphone === "allow" ? "allowed" : "denied"));
+      if (x.zoom) parts.push(t("zoom") + " " + x.zoom + " %");
+      li.appendChild(el("span", "meta", parts.join(" · ")));
+      var b = el("button", "btn", t("reset"));
+      b.type = "button";
+      b.addEventListener("click", function () { api("forget-site?site=" + encodeURIComponent(x.site)).then(showBrowserSettings); });
+      li.appendChild(b);
+      sites.appendChild(li);
+    });
+  }
+
+  function setting(key, value) { api("set?key=" + key + "&value=" + value).then(showBrowserSettings); }
+  $("sAsk").addEventListener("change", function () { setting("askWhereToSave", this.checked); });
+  $("sRestore").addEventListener("change", function () { setting("restoreSession", this.checked); });
+  $("sBlocker").addEventListener("change", function () { setting("blocker", this.checked); });
+  $("sFolderChange").addEventListener("click", function () { api("choose-download-folder").then(showBrowserSettings); });
+  $("sFolderShow").addEventListener("click", function () { api("show-download-folder"); });
+  $("sFolderReset").addEventListener("click", function () { api("reset-download-folder").then(showBrowserSettings); });
+  $("sMakeDefault").addEventListener("click", function () { api("make-default").then(showBrowserSettings); });
+  $("sImportBookmarks").addEventListener("click", function () { api("import-bookmarks"); });
+  $("sBlockerUpdate").addEventListener("click", function () {
+    $("sBlockerStatus").textContent = t("updating");
+    api("blocker-update").then(showBrowserSettings);
+  });
+  $("sClearHistory").addEventListener("click", function () {
+    if (!confirm(t("confirmClearHistory"))) return;
+    api("clear-history").then(function () {
+      renderRecent([]);
+      $("sHistoryInfo").textContent = t("historyCleared");
+    });
+  });
+  $("sClearData").addEventListener("click", function () {
+    if (!confirm(t("confirmClearData"))) return;
+    api("clear-website-data").then(function () { alert(t("dataCleared")); });
+  });
+  $("sShowFavs").addEventListener("change", function () { state.showFavs = this.checked; save(); renderFavs(); });
+  $("sShowRecent").addEventListener("change", function () { state.showRecent = this.checked; save(); renderRecent(lastRecent); });
   $("sLang").addEventListener("change", function () { state.lang = this.value; save(); refresh(); renderSettings(); });
   $("sName").addEventListener("input", function () { state.name = this.value.trim().slice(0, 30); save(); tick(); });
   $("sClock").addEventListener("change", function () { state.showClock = this.checked; save(); tick(); });
-  $("sEngine").addEventListener("change", function () { state.engine = this.value; save(); applyTexts(); });
+  $("sEngine").addEventListener("change", function () {
+    state.engine = this.value; state.engineChangedAt = Date.now(); save(); applyTexts();
+    if (inApp) api("set?key=engine&value=" + encodeURIComponent(this.value));
+  });
+  $("sWeather").addEventListener("change", function () { state.weatherOn = this.checked; save(); renderWeather(true); });
+  $("sCity").addEventListener("change", function () { state.weatherCity = this.value.trim().slice(0, 60); save(); renderWeather(true); });
+
+  // ---------------------------------------------------------------- weather (opt-in, open-meteo.com)
+
+  var WEATHER_KEY = "rook.weather";
+  var WEATHER_ICONS = [[0, "☀️"], [2, "🌤️"], [3, "☁️"], [48, "🌫️"], [67, "🌧️"], [77, "🌨️"], [82, "🌦️"], [99, "⛈️"]];
+  function weatherIcon(code) {
+    for (var i = 0; i < WEATHER_ICONS.length; i++) if (code <= WEATHER_ICONS[i][0]) return WEATHER_ICONS[i][1];
+    return "🌡️";
+  }
+
+  function renderWeather(force) {
+    var box = $("weather");
+    if (!state.weatherOn || !state.weatherCity) { box.hidden = true; return; }
+    var cached = null;
+    try { cached = JSON.parse(localStorage.getItem(WEATHER_KEY) || "null"); } catch (e) {}
+    var fresh = cached && cached.city === state.weatherCity && Date.now() - cached.time < 30 * 60 * 1000;
+    if (fresh && !force) { showWeather(cached); return; }
+    var city = state.weatherCity;
+    fetch("https://geocoding-api.open-meteo.com/v1/search?count=1&language=" + lang() + "&name=" + encodeURIComponent(city))
+      .then(function (r) { return r.json(); })
+      .then(function (g) {
+        var place = g.results && g.results[0];
+        if (!place) throw new Error("not found");
+        return fetch("https://api.open-meteo.com/v1/forecast?current=temperature_2m,weather_code&latitude=" +
+          place.latitude.toFixed(2) + "&longitude=" + place.longitude.toFixed(2))
+          .then(function (r) { return r.json(); })
+          .then(function (w) {
+            var data = { city: city, name: place.name, temp: Math.round(w.current.temperature_2m),
+                         icon: weatherIcon(w.current.weather_code), time: Date.now() };
+            try { localStorage.setItem(WEATHER_KEY, JSON.stringify(data)); } catch (e) {}
+            showWeather(data);
+          });
+      })
+      .catch(function () { box.hidden = false; box.textContent = t("weatherError"); });
+  }
+
+  function showWeather(d) {
+    var box = $("weather");
+    box.hidden = false;
+    box.textContent = d.icon + " " + d.temp + "° · " + d.name;
+  }
+
+  // ---------------------------------------------------------------- inside the Rook browser app
+
+  var inApp = location.protocol === "rook:";
+
+  /// Exchanges data with the browser: favorites added with ⌘D or imported, the search engine
+  /// chosen in the browser settings, and recently visited pages (only shown inside the app).
+  function syncWithBrowser() {
+    if (!inApp) return;
+    fetch("api/native.json", { cache: "no-store" }).then(function (r) { return r.json(); }).then(function (n) {
+      var changed = false;
+      if (ENGINES[n.engine] && n.engineChangedAt > (state.engineChangedAt || 0) && n.engine !== state.engine) {
+        state.engine = n.engine;
+        state.engineChangedAt = n.engineChangedAt;
+        changed = true;
+      }
+      var pending = Array.isArray(n.pendingFavorites) ? n.pendingFavorites : [];
+      pending.forEach(function (f) {
+        var url = f && safeUrl(f.url);
+        if (url && typeof f.name === "string" && state.favorites.length < 60 &&
+            !state.favorites.some(function (x) { return x.url === url; })) {
+          state.favorites.push({ name: f.name.trim().slice(0, 40) || host(url), url: url });
+          changed = true;
+        }
+      });
+      if (pending.length) fetch("api/favorites-taken?count=" + pending.length);
+      if (changed) { save(); applyTexts(); renderFavs(); }
+      fetch("api/favorites-known?list=" + encodeURIComponent(JSON.stringify(state.favorites)));
+      renderRecent(Array.isArray(n.recent) ? n.recent : []);
+    }).catch(function () {});
+  }
+
+  var lastRecent = [];
+  function renderRecent(list) {
+    lastRecent = list;
+    var box = $("recent");
+    box.textContent = "";
+    var items = state.showRecent ? list.filter(function (r) { return r && safeUrl(r.url); }).slice(0, 6) : [];
+    if (!items.length) { box.hidden = true; return; }
+    box.hidden = false;
+    box.appendChild(el("div", "recent-title", t("recent")));
+    var row = el("div", "recent-row");
+    items.forEach(function (r) {
+      var a = el("a", "chip");
+      a.href = safeUrl(r.url);
+      a.title = r.url;
+      a.appendChild(siteIcon(r.title || host(r.url), safeUrl(r.url), 32));
+      a.appendChild(el("span", null, r.title || host(r.url)));
+      row.appendChild(a);
+    });
+    box.appendChild(row);
+  }
   $("sDim").addEventListener("input", function () { state.dim = Number(this.value); save(); applyLook(); });
   $("sIcons").addEventListener("change", function () { state.icons = this.checked; save(); renderFavs(); });
 
@@ -612,10 +873,23 @@
     applyLook();
     tick();
     renderFavs();
+    renderWeather(false);
+    syncWithBrowser();
     $("home").hidden = false;
     $("gear").hidden = false;
   }
 
+  document.body.classList.toggle("in-app", inApp);
   if (state.onboarded) refresh(); else { applyTexts(); applyLook(); startOnboarding(); }
   setInterval(tick, 10000);
+
+  // ⌘, in the Rook app opens the start page with #settings.
+  function settingsFromAddress() {
+    if (location.hash === "#settings" && state.onboarded) {
+      openSettings();
+      history.replaceState(null, "", location.pathname);
+    }
+  }
+  settingsFromAddress();
+  window.addEventListener("hashchange", settingsFromAddress);
 })();

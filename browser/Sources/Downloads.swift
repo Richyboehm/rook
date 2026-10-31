@@ -4,6 +4,8 @@ import WebKit
 
 extension Notification.Name {
     static let rookDownloadStarted = Notification.Name("RookDownloadStarted")
+    /// Sent twice a second while downloads run (for the progress ring on the toolbar button).
+    static let rookDownloadsChanged = Notification.Name("RookDownloadsChanged")
 }
 
 /// One download with its progress.
@@ -48,17 +50,26 @@ final class DownloadManager: NSObject, WKDownloadDelegate {
             completionHandler(file)
             return
         }
-        let folder = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask)[0]
-        guard FileManager.default.isWritableFile(atPath: folder.path) else {
-            completionHandler(nil)   // cancels; the failure shows up in the list
+        let folder = Settings.effectiveDownloadFolder
+        var target = Rook.uniqueDestination(in: folder, suggestedName: suggestedFilename)
+        if Settings.askWhereToSave {
+            let panel = NSSavePanel()
+            panel.directoryURL = folder
+            panel.nameFieldStringValue = target.lastPathComponent
+            guard panel.runModal() == .OK, let chosen = panel.url else { completionHandler(nil); return }
+            // NSSavePanel already asked before replacing an existing file.
+            try? FileManager.default.removeItem(at: chosen)
+            target = chosen
+        } else if !FileManager.default.isWritableFile(atPath: folder.path) {
+            completionHandler(nil)   // cancels; no permission to write into the folder
             return
         }
-        let target = Rook.uniqueDestination(in: folder, suggestedName: suggestedFilename)
         let item = DownloadItem(download: download, name: target.lastPathComponent)
         item.file = target
         items.insert(item, at: 0)
         completionHandler(target)
         NotificationCenter.default.post(name: .rookDownloadStarted, object: item)
+        startTicking()
     }
 
     func downloadDidFinish(_ download: WKDownload) {
@@ -131,6 +142,26 @@ final class DownloadManager: NSObject, WKDownloadDelegate {
 
     /// Asked before quitting: running downloads would be lost.
     var runningCount: Int { items.filter { $0.state == .running }.count }
+
+    /// Combined progress of all running downloads, nil if none is running.
+    var overallProgress: Double? {
+        let running = items.filter { $0.state == .running }
+        guard !running.isEmpty else { return nil }
+        let total = running.reduce(Int64(0)) { $0 + max(0, $1.progress.totalUnitCount) }
+        let done = running.reduce(Int64(0)) { $0 + max(0, $1.progress.completedUnitCount) }
+        return total > 0 ? Double(done) / Double(total) : 0
+    }
+
+    private var ticker: Timer?
+
+    /// Keeps the progress ring up to date while something downloads, then stops (no idle work).
+    func startTicking() {
+        guard ticker == nil else { return }
+        ticker = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] timer in
+            NotificationCenter.default.post(name: .rookDownloadsChanged, object: nil)
+            if self?.hasRunning != true { timer.invalidate(); self?.ticker = nil }
+        }
+    }
 }
 
 /// The download bar: a popover under the toolbar button, like in Safari.

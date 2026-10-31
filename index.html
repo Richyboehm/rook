@@ -16,6 +16,7 @@
 <main id="home" hidden>
   <div id="clock"></div>
   <div id="greeting"></div>
+  <div id="weather" hidden></div>
 
   <form id="search" autocomplete="off" role="search">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
@@ -23,6 +24,7 @@
   </form>
 
   <div id="favs"></div>
+  <div id="recent" hidden></div>
 </main>
 
 <button id="gear" class="round" hidden>
@@ -60,46 +62,102 @@
   </form>
 </section>
 
-<!-- Settings -->
+<!-- Settings (the gear): four tabs. Parts marked app-only exist only inside the Rook browser. -->
 <section id="setDialog" class="backdrop" hidden>
-  <div class="sheet">
-    <h2 data-i18n="settings"></h2>
-
-    <h3 data-i18n="general"></h3>
-    <label for="sLang" data-i18n="language"></label>
-    <select id="sLang"><option value="auto"></option><option value="en">English</option><option value="de">Deutsch</option></select>
-    <label for="sName" data-i18n="yourName"></label>
-    <input id="sName" type="text" maxlength="30">
-    <label class="check"><input type="checkbox" id="sClock"> <span data-i18n="showClock"></span></label>
-
-    <h3 data-i18n="search"></h3>
-    <label for="sEngine" data-i18n="engine"></label>
-    <select id="sEngine"></select>
-
-    <h3 data-i18n="look"></h3>
-    <div class="bgs" id="sBgs"></div>
-    <label for="sDim" data-i18n="dim"></label>
-    <input id="sDim" type="range" min="0" max="80" step="5">
-    <label data-i18n="accent"></label>
-    <div class="swatches" id="sAccent"></div>
-
-    <h3 data-i18n="privacy"></h3>
-    <label class="check"><input type="checkbox" id="sIcons"> <span data-i18n="loadIcons"></span></label>
-    <p class="hint" data-i18n="loadIconsHint"></p>
-
-    <h3 data-i18n="backup"></h3>
-    <div class="row tight">
-      <button class="btn" id="sExport" data-i18n="export"></button>
-      <button class="btn" id="sImport" data-i18n="import"></button>
-      <input id="sImportFile" type="file" accept="application/json,.json" hidden>
+  <div class="sheet settings">
+    <div class="set-head">
+      <h2 data-i18n="settings"></h2>
+      <div class="seg" id="sTabs" role="tablist">
+        <button type="button" role="tab" data-pane="look" data-i18n="tabLook"></button>
+        <button type="button" role="tab" data-pane="start" data-i18n="tabStart"></button>
+        <button type="button" role="tab" data-pane="browser" data-i18n="tabBrowser"></button>
+        <button type="button" role="tab" data-pane="privacy" data-i18n="tabPrivacy"></button>
+      </div>
     </div>
-    <div class="row tight">
-      <button class="btn" id="sRestart" data-i18n="restartOnboarding"></button>
-      <button class="btn danger" id="sReset" data-i18n="resetAll"></button>
-    </div>
-    <p class="hint" data-i18n="editHint"></p>
 
-    <div class="row end"><button class="btn primary" id="sClose" data-i18n="done"></button></div>
+    <div class="pane" data-pane="look">
+      <h3 data-i18n="background"></h3>
+      <div class="bgs" id="sBgs"></div>
+      <label for="sDim" data-i18n="dim"></label>
+      <input id="sDim" type="range" min="0" max="80" step="5">
+      <h3 data-i18n="accent"></h3>
+      <div class="swatches" id="sAccent"></div>
+      <h3 data-i18n="language"></h3>
+      <select id="sLang"><option value="auto"></option><option value="en">English</option><option value="de">Deutsch</option></select>
+    </div>
+
+    <div class="pane" data-pane="start">
+      <h3 data-i18n="greetingTitle"></h3>
+      <label for="sName" data-i18n="yourName"></label>
+      <input id="sName" type="text" maxlength="30">
+      <label class="check"><input type="checkbox" id="sClock"> <span data-i18n="showClock"></span></label>
+      <h3 data-i18n="startContent"></h3>
+      <label class="check"><input type="checkbox" id="sShowFavs"> <span data-i18n="showFavs"></span></label>
+      <label class="check app-only"><input type="checkbox" id="sShowRecent"> <span data-i18n="showRecent"></span></label>
+      <label class="check"><input type="checkbox" id="sIcons"> <span data-i18n="loadIcons"></span></label>
+      <p class="hint" data-i18n="loadIconsHint"></p>
+      <h3 data-i18n="weather"></h3>
+      <label class="check"><input type="checkbox" id="sWeather"> <span data-i18n="showWeather"></span></label>
+      <label for="sCity" data-i18n="weatherCity"></label>
+      <input id="sCity" type="text" maxlength="60" placeholder="Berlin">
+      <p class="hint" data-i18n="weatherHint"></p>
+      <div class="row tight"><button type="button" class="btn" id="sRestart" data-i18n="restartOnboarding"></button></div>
+    </div>
+
+    <div class="pane" data-pane="browser">
+      <h3 data-i18n="search"></h3>
+      <label for="sEngine" data-i18n="engine"></label>
+      <select id="sEngine"></select>
+      <div class="app-only">
+        <h3 data-i18n="downloads"></h3>
+        <div class="kv"><span class="kv-label" data-i18n="downloadFolder"></span><code id="sFolder">–</code></div>
+        <div class="row tight">
+          <button type="button" class="btn" id="sFolderChange" data-i18n="change"></button>
+          <button type="button" class="btn" id="sFolderShow" data-i18n="showInFinder"></button>
+          <button type="button" class="btn ghost" id="sFolderReset" data-i18n="standardFolder"></button>
+        </div>
+        <label class="check"><input type="checkbox" id="sAsk"> <span data-i18n="askWhereToSave"></span></label>
+        <p class="hint" data-i18n="downloadsHint"></p>
+        <h3 data-i18n="tabsTitle"></h3>
+        <label class="check"><input type="checkbox" id="sRestore"> <span data-i18n="restoreSession"></span></label>
+        <h3 data-i18n="defaultBrowser"></h3>
+        <p class="hint" id="sDefaultStatus"></p>
+        <div class="row tight">
+          <button type="button" class="btn" id="sMakeDefault" data-i18n="makeDefault"></button>
+          <button type="button" class="btn" id="sImportBookmarks" data-i18n="importBookmarks"></button>
+        </div>
+      </div>
+      <p class="hint web-only" data-i18n="appOnlyHint"></p>
+    </div>
+
+    <div class="pane" data-pane="privacy">
+      <div class="app-only">
+        <h3 data-i18n="blocker"></h3>
+        <label class="check"><input type="checkbox" id="sBlocker"> <span data-i18n="blockerToggle"></span></label>
+        <p class="hint" id="sBlockerStatus"></p>
+        <div class="row tight"><button type="button" class="btn" id="sBlockerUpdate" data-i18n="updateLists"></button></div>
+        <label data-i18n="exceptions"></label>
+        <ul class="list" id="sExceptions"></ul>
+        <h3 data-i18n="historyTitle"></h3>
+        <p class="hint" id="sHistoryInfo"></p>
+        <div class="row tight">
+          <button type="button" class="btn danger" id="sClearHistory" data-i18n="clearHistory"></button>
+          <button type="button" class="btn danger" id="sClearData" data-i18n="clearData"></button>
+        </div>
+        <h3 data-i18n="sitePermissions"></h3>
+        <ul class="list" id="sSites"></ul>
+      </div>
+      <h3 data-i18n="backup"></h3>
+      <div class="row tight">
+        <button type="button" class="btn" id="sExport" data-i18n="export"></button>
+        <button type="button" class="btn" id="sImport" data-i18n="import"></button>
+        <input id="sImportFile" type="file" accept="application/json,.json" hidden>
+        <button type="button" class="btn danger" id="sReset" data-i18n="resetAll"></button>
+      </div>
+      <p class="hint" data-i18n="editHint"></p>
+    </div>
+
+    <div class="row end"><button type="button" class="btn primary" id="sClose" data-i18n="done"></button></div>
   </div>
 </section>
 

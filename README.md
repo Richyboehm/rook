@@ -56,7 +56,13 @@ For new tabs, these browsers require an extension that redirects the new tab pag
 
 Rook is also a standalone Mac browser: its own app and window, with Rook as the start page in every new tab. Pages are rendered by **WebKit, Safari’s engine**, so it gets the same security updates with every macOS update, plus Apple’s fraudulent website warning.
 
-- Native tabs and windows, address bar (search or web address), back/forward, zoom, find on page (⌘F), print (⌘P)
+- Rook’s own tab bar in a glass look: favicons, pinned tabs, drag to reorder, right-click menu (pin, duplicate, move to new window, close others)
+- Address bar like Safari: shows just the site name while browsing, the full address when you click in; local suggestions from your favorites and history while typing (nothing is sent to a search engine)
+- Settings window (⌘,): search engine, restore tabs, download folder or “always ask”, default browser, blocker and exceptions, per-site camera/microphone permissions and zoom
+- Favorites: ⌘D adds the current page to the start page; import bookmarks from an HTML export of Safari, Chrome or Firefox
+- History window (⌘Y): search, open, delete single entries or the last hour/today/everything
+- Start page inside the app shows “Recently visited”; optional weather (off by default, uses open-meteo.com)
+- Back/forward, zoom (remembered per site), find on page (⌘F), print (⌘P)
 - Download bar with progress, pause/resume, retry and “Show in Finder”. Existing files are never overwritten, downloads are never opened automatically and carry macOS’ quarantine mark, so Gatekeeper checks them
 - History menu, reopen closed tab (⇧⌘T), tabs are restored after quitting or a crash
 - Private windows (⇧⌘N): cookies and website storage stay in memory and are gone when the last private window closes. Downloads and anything you save on purpose remain on your Mac, and your network provider can still see which sites you visit – private windows are not anonymity
@@ -75,7 +81,8 @@ The filter lists are not part of this repository; they are downloaded at runtime
 **Not included yet / not possible:**
 - Password autofill and passkeys: Apple only allows these for browsers with a special entitlement from a paid developer account
 - Safari extensions, iCloud tab sync, importing bookmarks from other browsers
-- Pinning and muting tabs, per-site permission settings
+- Muting tabs and an audio indicator (WebKit offers no public interface for this)
+- Bookmark folders (imports are flattened, the start page shows up to 60 favorites)
 - Automatic updates: rebuild from source to update
 
 **Build it yourself** (needs Apple’s free Command Line Tools: `xcode-select --install`):

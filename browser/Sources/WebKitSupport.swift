@@ -55,10 +55,19 @@ enum Rook {
         "brave": "https://search.brave.com/search?q="
     ]
 
-    /// The search engine chosen on the start page (synced from its settings).
+    /// The search engine – shared by the address bar, the settings window and the start page.
     static var engine: String {
         get { UserDefaults.standard.string(forKey: "engine") ?? "google" }
-        set { if engines[newValue] != nil { UserDefaults.standard.set(newValue, forKey: "engine") } }
+        set {
+            guard engines[newValue] != nil, newValue != UserDefaults.standard.string(forKey: "engine") else { return }
+            UserDefaults.standard.set(newValue, forKey: "engine")
+            UserDefaults.standard.set(Date().timeIntervalSince1970 * 1000, forKey: "engineChangedAt")
+        }
+    }
+
+    static var engineName: String {
+        ["google": "Google", "duckduckgo": "DuckDuckGo", "startpage": "Startpage", "ecosia": "Ecosia",
+         "bing": "Bing", "brave": "Brave Search"][engine] ?? "Google"
     }
 
     /// Turns what was typed into the address bar into a URL: a web address or a search.
@@ -135,6 +144,7 @@ final class StartPageHandler: NSObject, WKURLSchemeHandler {
 
     func webView(_ webView: WKWebView, start task: WKURLSchemeTask) {
         guard let url = task.request.url else { return }
+        if url.path.hasPrefix("/api/") { BrowserAPI.handle(url, task: task, webView: webView); return }
         var path = url.path
         if path.isEmpty || path == "/" { path = "/index.html" }
         let file = root.appendingPathComponent(String(path.dropFirst())).standardizedFileURL
@@ -151,6 +161,7 @@ final class StartPageHandler: NSObject, WKURLSchemeHandler {
         task.didFinish()
     }
 
-    func webView(_ webView: WKWebView, stop task: WKURLSchemeTask) {}
+    func webView(_ webView: WKWebView, stop task: WKURLSchemeTask) {
+        BrowserAPI.stoppedTasks.insert(ObjectIdentifier(task as AnyObject))
+    }
 }
-

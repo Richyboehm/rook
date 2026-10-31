@@ -53,9 +53,9 @@ check(Rook.uniqueDestination(in: folder, suggestedName: "", exists: exists).last
 
 // MARK: Error texts
 
-check(BrowserWindowController.explain(NSError(domain: NSURLErrorDomain, code: NSURLErrorServerCertificateUntrusted)).0 == "Verbindung nicht sicher",
+check(BrowserTab.explain(NSError(domain: NSURLErrorDomain, code: NSURLErrorServerCertificateUntrusted)).0 == "Verbindung nicht sicher",
       "Zertifikatsfehler wird als unsicher erklärt")
-check(BrowserWindowController.explain(NSError(domain: NSURLErrorDomain, code: NSURLErrorNotConnectedToInternet)).0 == "Keine Internetverbindung",
+check(BrowserTab.explain(NSError(domain: NSURLErrorDomain, code: NSURLErrorNotConnectedToInternet)).0 == "Keine Internetverbindung",
       "Offline wird verständlich erklärt")
 
 // MARK: Website data
@@ -109,6 +109,17 @@ let lastTrigger = (converted.rules.last?["trigger"] as? [String: Any])?["if-top-
 check(lastTrigger?.first?.contains("meine-seite\\.de") == true, "Ausnahme pro Website steht ganz am Ende")
 check(ContentBlocker.site(of: URL(string: "https://www.spiegel.de/x")) == "spiegel.de", "Website-Name ohne www.")
 check(ContentBlocker.site(of: URL(string: "rook://start/")) == nil, "Startseite hat keine Ausnahme")
+
+// MARK: Settings interface: only the start page may use it
+
+func apiRequest(_ url: String, from page: String?) -> URLRequest {
+    var r = URLRequest(url: URL(string: url)!)
+    r.mainDocumentURL = page.flatMap(URL.init(string:))
+    return r
+}
+check(BrowserAPI.isAllowed(apiRequest("rook://start/api/clear-history", from: "rook://start/")), "Startseite darf die Schnittstelle nutzen")
+check(!BrowserAPI.isAllowed(apiRequest("rook://start/api/clear-history", from: "https://boese.example/")), "Fremde Website darf den Verlauf nicht löschen")
+check(!BrowserAPI.isAllowed(apiRequest("rook://start/api/settings.json", from: nil)), "Anfrage ohne Herkunft wird abgelehnt")
 
 print(failures == 0 ? "\nAlle Tests bestanden." : "\n\(failures) Test(s) fehlgeschlagen.")
 exit(failures == 0 ? 0 : 1)
