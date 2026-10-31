@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<meta name="description" content="Rook – a beautiful, private new tab page. No account, no tracking, no build step.">
+<title>Rook</title>
+<link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="bg"></div>
+<div id="shade"></div>
+
+<main id="home" hidden>
+  <div id="clock"></div>
+  <div id="greeting"></div>
+
+  <form id="search" autocomplete="off" role="search">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+    <input id="q" type="text" autofocus>
+  </form>
+
+  <div id="favs"></div>
+</main>
+
+<button id="gear" class="round" hidden>
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+</button>
+
+<!-- Onboarding -->
+<section id="onboarding" class="backdrop" hidden>
+  <div class="sheet wide">
+    <div class="steps" id="obDots"></div>
+    <div id="obBody"></div>
+    <div class="row">
+      <button type="button" class="btn ghost" id="obSkip"></button>
+      <span class="spacer"></span>
+      <button type="button" class="btn" id="obBack"></button>
+      <button type="button" class="btn primary" id="obNext"></button>
+    </div>
+  </div>
+</section>
+
+<!-- Favorite editor -->
+<section id="favDialog" class="backdrop" hidden>
+  <form class="sheet" id="favForm">
+    <h2 id="favTitle"></h2>
+    <label for="favName" data-i18n="name"></label>
+    <input id="favName" type="text" required maxlength="40">
+    <label for="favUrl" data-i18n="address"></label>
+    <input id="favUrl" type="text" required placeholder="example.com">
+    <div class="row">
+      <button type="button" class="btn danger" id="favDelete" data-i18n="delete"></button>
+      <span class="spacer"></span>
+      <button type="button" class="btn" id="favCancel" data-i18n="cancel"></button>
+      <button type="submit" class="btn primary" data-i18n="save"></button>
+    </div>
+  </form>
+</section>
+
+<!-- Settings -->
+<section id="setDialog" class="backdrop" hidden>
+  <div class="sheet">
+    <h2 data-i18n="settings"></h2>
+
+    <h3 data-i18n="general"></h3>
+    <label for="sLang" data-i18n="language"></label>
+    <select id="sLang"><option value="auto"></option><option value="en">English</option><option value="de">Deutsch</option></select>
+    <label for="sName" data-i18n="yourName"></label>
+    <input id="sName" type="text" maxlength="30">
+    <label class="check"><input type="checkbox" id="sClock"> <span data-i18n="showClock"></span></label>
+
+    <h3 data-i18n="search"></h3>
+    <label for="sEngine" data-i18n="engine"></label>
+    <select id="sEngine"></select>
+
+    <h3 data-i18n="look"></h3>
+    <div class="bgs" id="sBgs"></div>
+    <label for="sDim" data-i18n="dim"></label>
+    <input id="sDim" type="range" min="0" max="80" step="5">
+    <label data-i18n="accent"></label>
+    <div class="swatches" id="sAccent"></div>
+
+    <h3 data-i18n="privacy"></h3>
+    <label class="check"><input type="checkbox" id="sIcons"> <span data-i18n="loadIcons"></span></label>
+    <p class="hint" data-i18n="loadIconsHint"></p>
+
+    <h3 data-i18n="backup"></h3>
+    <div class="row tight">
+      <button class="btn" id="sExport" data-i18n="export"></button>
+      <button class="btn" id="sImport" data-i18n="import"></button>
+      <input id="sImportFile" type="file" accept="application/json,.json" hidden>
+    </div>
+    <div class="row tight">
+      <button class="btn" id="sRestart" data-i18n="restartOnboarding"></button>
+      <button class="btn danger" id="sReset" data-i18n="resetAll"></button>
+    </div>
+    <p class="hint" data-i18n="editHint"></p>
+
+    <div class="row end"><button class="btn primary" id="sClose" data-i18n="done"></button></div>
+  </div>
+</section>
+
+<input id="bgFile" type="file" accept="image/*" hidden>
+
+<script src="app.js"></script>
+</body>
+</html>
