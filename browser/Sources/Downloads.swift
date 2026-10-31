@@ -51,25 +51,43 @@ final class DownloadManager: NSObject, WKDownloadDelegate {
             return
         }
         let folder = Settings.effectiveDownloadFolder
-        var target = Rook.uniqueDestination(in: folder, suggestedName: suggestedFilename)
-        if Settings.askWhereToSave {
-            let panel = NSSavePanel()
-            panel.directoryURL = folder
-            panel.nameFieldStringValue = target.lastPathComponent
-            guard panel.runModal() == .OK, let chosen = panel.url else { completionHandler(nil); return }
-            // NSSavePanel already asked before replacing an existing file.
-            try? FileManager.default.removeItem(at: chosen)
-            target = chosen
-        } else if !FileManager.default.isWritableFile(atPath: folder.path) {
-            completionHandler(nil)   // cancels; no permission to write into the folder
+        let target = Rook.uniqueDestination(in: folder, suggestedName: suggestedFilename)
+        guard Settings.askWhereToSave else {
+            guard FileManager.default.isWritableFile(atPath: folder.path) else {
+                completionHandler(nil)   // cancels; no permission to write into the folder
+                return
+            }
+            start(download, at: target, completionHandler: completionHandler)
             return
         }
+        // Ask like Safari: the save panel slides out of the window as a sheet. WebKit waits for the
+        // answer, so nothing blocks while the panel is open (no nested modal loop inside WebKit's call).
+        let panel = NSSavePanel()
+        panel.directoryURL = folder
+        panel.nameFieldStringValue = target.lastPathComponent
+        let finish: (NSApplication.ModalResponse) -> Void = { [weak self] response in
+            guard response == .OK, let chosen = panel.url, let self else { completionHandler(nil); return }
+            // NSSavePanel already asked before replacing an existing file.
+            try? FileManager.default.removeItem(at: chosen)
+            self.start(download, at: chosen, completionHandler: completionHandler)
+        }
+        if let window = download.webView?.window, window.attachedSheet == nil {
+            panel.beginSheetModal(for: window, completionHandler: finish)
+        } else {
+            finish(panel.runModal())
+        }
+    }
+
+    private func start(_ download: WKDownload, at target: URL, completionHandler: @escaping (URL?) -> Void) {
         let item = DownloadItem(download: download, name: target.lastPathComponent)
         item.file = target
         items.insert(item, at: 0)
         completionHandler(target)
-        NotificationCenter.default.post(name: .rookDownloadStarted, object: item)
         startTicking()
+        // Announced a moment later, when the save panel is gone and the window is calm again.
+        DispatchQueue.main.async {
+            NotificationCenter.default.post(name: .rookDownloadStarted, object: item)
+        }
     }
 
     func downloadDidFinish(_ download: WKDownload) {

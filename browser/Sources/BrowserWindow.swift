@@ -516,12 +516,27 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSToo
     @objc func showDownloads() {
         guard let window, window.isVisible else { return }
         if downloadsPopover.isShown { downloadsPopover.close(); return }
-        downloadsPopover.show(relativeTo: downloadsButton.bounds, of: downloadsButton, preferredEdge: .minY)
+        showDownloadsPopover()
     }
 
     @objc private func downloadStarted() {
-        guard window?.isKeyWindow == true, !downloadsPopover.isShown else { return }
-        downloadsPopover.show(relativeTo: downloadsButton.bounds, of: downloadsButton, preferredEdge: .minY)
+        // Only for the window in front, and never while a sheet or dialog is open.
+        guard let window, window.isKeyWindow, window.attachedSheet == nil, NSApp.modalWindow == nil,
+              !downloadsPopover.isShown else { return }
+        showDownloadsPopover()
+    }
+
+    /// AppKit stops the app if a popover is shown on a view that is not on screen, for example when the
+    /// downloads button sits in the toolbar's » menu of a narrow window. Then the list opens below the
+    /// top right corner of the page instead.
+    private func showDownloadsPopover() {
+        let button = downloadsButton
+        if button.window != nil, !button.isHiddenOrHasHiddenAncestor, !button.visibleRect.isEmpty {
+            downloadsPopover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+        } else if let content = window?.contentView, content.window != nil, !content.bounds.isEmpty {
+            let corner = NSRect(x: content.bounds.maxX - 40, y: content.isFlipped ? 0 : content.bounds.maxY - 1, width: 24, height: 1)
+            downloadsPopover.show(relativeTo: corner, of: content, preferredEdge: .minY)
+        }
     }
 
     @objc private func downloadsChanged() {
