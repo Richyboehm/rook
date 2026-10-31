@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleName</key>
+	<string>Rook</string>
+	<key>CFBundleDisplayName</key>
+	<string>Rook</string>
+	<key>CFBundleIdentifier</key>
+	<string>de.richyboehm.rook</string>
+	<key>CFBundleExecutable</key>
+	<string>Rook</string>
+	<key>CFBundleIconFile</key>
+	<string>Rook</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>0.1.0</string>
+	<key>CFBundleVersion</key>
+	<string>1</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>13.0</string>
+	<key>LSApplicationCategoryType</key>
+	<string>public.app-category.productivity</string>
+	<key>NSPrincipalClass</key>
+	<string>NSApplication</string>
+	<key>NSHighResolutionCapable</key>
+	<true/>
+	<key>NSHumanReadableCopyright</key>
+	<string>MIT License</string>
+
+	<!-- A browser must also open old http:// sites (shown with a warning). This exception applies
+	     only to web content in the browser views, not to Rook's own connections. -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoadsInWebContent</key>
+		<true/>
+	</dict>
+
+	<!-- Downloads get the "from the internet" mark, so Gatekeeper checks them – like in Safari. -->
+	<key>LSFileQuarantineEnabled</key>
+	<true/>
+
+	<!-- Websites may ask for camera/microphone (video calls); macOS shows these texts. -->
+	<key>NSCameraUsageDescription</key>
+	<string>Eine Website möchte deine Kamera verwenden.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Eine Website möchte dein Mikrofon verwenden.</string>
+
+	<!-- Lets Rook be chosen as default web browser. -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>Web site URL</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>http</string>
+				<string>https</string>
+			</array>
+		</dict>
+	</array>
+	<key>CFBundleDocumentTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeName</key>
+			<string>HTML document</string>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>public.html</string>
+			</array>
+		</dict>
+	</array>
+</dict>
+</plist>

@@ -508,7 +508,7 @@
 
     if (step === "welcome") {
       var logo = el("img", "logo");
-      logo.src = "assets/logo.svg";
+      logo.src = "assets/logo.png";
       logo.alt = "";
       body.appendChild(logo);
       body.appendChild(el("h1", null, t("welcomeTitle")));
