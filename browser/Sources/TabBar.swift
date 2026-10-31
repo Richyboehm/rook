@@ -70,7 +70,8 @@ final class TabBarView: NSVisualEffectView {
         let normalWidth = normalCount > 0 ? min(240, max(60, (available - gap * normalCount) / normalCount)) : 0
         var x = inset
         let y: CGFloat = 4, h = bounds.height - 8
-        for (i, item) in items.enumerated() where !item.isDragging {
+        // The list of tabs can be shorter for a moment (while a window closes); never read past its end.
+        for (i, item) in items.enumerated() where i < tabs.count && !item.isDragging {
             let w = tabs[i].isPinned ? pinnedWidth : normalWidth
             item.frame = NSRect(x: x, y: y, width: w, height: h)
             x += w + gap

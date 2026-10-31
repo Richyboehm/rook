@@ -132,6 +132,26 @@ let startTab = BrowserTab(isPrivate: false)
 check((startTab.webView.value(forKey: "drawsBackground") as? Bool) == false, "Neuer Tab mit Startseite blitzt nicht weiß auf")
 let blankTab = BrowserTab(url: nil, isPrivate: false)
 check((blankTab.webView.value(forKey: "drawsBackground") as? Bool) != false, "Websites behalten ihren normalen weißen Grund")
+
+// A window that closes empties its tab list; the bar may still lay out once (e.g. leaving full screen).
+final class FakeTabs: TabBarDelegate {
+    var tabs: [BrowserTab] = []
+    var selectedIndex = 0
+    var isPrivate = false
+    func selectTab(at index: Int) {}
+    func closeTab(at index: Int) {}
+    func moveTab(from: Int, to: Int) {}
+    func menuForTab(at index: Int) -> NSMenu { NSMenu() }
+    func newTab() {}
+}
+let fakeTabs = FakeTabs()
+fakeTabs.tabs = [startTab, blankTab]
+let bar = TabBarView(frame: NSRect(x: 0, y: 0, width: 800, height: TabBarView.height))
+bar.delegate = fakeTabs
+bar.reload()
+fakeTabs.tabs = []
+bar.layout()
+check(true, "Tab-Leiste stürzt nicht ab, wenn alle Tabs auf einmal weg sind")
 startTab.close(); blankTab.close()
 
 // MARK: Settings interface: only the start page may use it

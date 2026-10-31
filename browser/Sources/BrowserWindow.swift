@@ -261,12 +261,12 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSToo
 
     func closeTab(at index: Int) {
         guard tabs.indices.contains(index) else { return }
+        if tabs.count == 1 { window?.close(); return }   // windowWillClose remembers the tab
         let tab = tabs[index]
         if !isPrivate, let url = tab.displayURL, ["http", "https"].contains(url.scheme ?? "") {
             Self.closedTabs.append(url)
             if Self.closedTabs.count > 25 { Self.closedTabs.removeFirst() }
         }
-        if tabs.count == 1 { window?.close(); return }
         tab.webView.removeFromSuperview()
         tab.close()
         tabs.remove(at: index)
@@ -593,6 +593,7 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSToo
             tab.close()
         }
         tabs.removeAll()
+        tabBar.reload()   // the closing window may still lay out (e.g. leaving full screen)
         BrowserWindowController.all.removeAll { $0 === self }
         if isPrivate, !BrowserWindowController.all.contains(where: { $0.isPrivate }) {
             Rook.discardPrivateSession()   // next private window starts without any cookies
