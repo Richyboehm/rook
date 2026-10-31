@@ -50,6 +50,13 @@ check(Rook.uniqueDestination(in: folder, suggestedName: "notiz", exists: exists)
 check(Rook.uniqueDestination(in: folder, suggestedName: "../../.zshrc", exists: exists).deletingLastPathComponent().path == folder.path, "Pfadangaben im Namen werden ignoriert")
 check(Rook.uniqueDestination(in: folder, suggestedName: "../../.zshrc", exists: exists).lastPathComponent == "zshrc", "Keine versteckten Dateien")
 check(Rook.uniqueDestination(in: folder, suggestedName: "", exists: exists).lastPathComponent == "Download", "Leerer Name wird zu „Download“")
+let jpeg = Rook.fileType(mimeType: "image/jpeg")
+check(Rook.nameWithExtension("Verbum HintergrundBild", type: jpeg) == "Verbum HintergrundBild.jpg", "Bild ohne Endung bekommt eine")
+check(Rook.nameWithExtension("foto.jpg", type: jpeg) == "foto.jpg", "Vorhandene Endung bleibt")
+check(Rook.nameWithExtension("bild.png", type: jpeg) == "bild.png", "Andere echte Endung wird nicht verändert")
+check(Rook.nameWithExtension("Version 1.5", type: jpeg) == "Version 1.5.jpg", "Zahl nach Punkt ist keine Endung")
+check(Rook.nameWithExtension("datei", type: Rook.fileType(mimeType: "application/octet-stream")) == "datei", "Unbekannter Typ: Name bleibt")
+check(Rook.nameWithExtension("datei", type: nil) == "datei", "Ohne Typ: Name bleibt")
 
 // MARK: Error texts
 

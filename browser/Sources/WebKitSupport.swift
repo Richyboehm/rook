@@ -1,4 +1,5 @@
 import AppKit
+import UniformTypeIdentifiers
 import WebKit
 
 /// Everything that is shared between all tabs: the WebKit configuration, the bundled start page,
@@ -113,6 +114,21 @@ enum Rook {
     }
 
     // MARK: Downloads
+
+    /// The file type a server sends (for example image/jpeg), if macOS knows a file extension for it.
+    static func fileType(mimeType: String?) -> UTType? {
+        guard let mimeType, let type = UTType(mimeType: mimeType), type.preferredFilenameExtension != nil else { return nil }
+        return type
+    }
+
+    /// Adds the matching extension when a name has none (some sites, like Pinterest, send just "bild"),
+    /// so the Finder knows it is an image and not just a "document".
+    static func nameWithExtension(_ name: String, type: UTType?) -> String {
+        let ext = (name as NSString).pathExtension
+        if !ext.isEmpty, let known = UTType(filenameExtension: ext), !known.isDynamic { return name }
+        guard !name.isEmpty, let add = type?.preferredFilenameExtension else { return name }
+        return "\(name).\(add == "jpeg" ? "jpg" : add)"   // .jpg, as most people know it
+    }
 
     /// A file name in `folder` that does not exist yet – existing files are never overwritten.
     static func uniqueDestination(in folder: URL, suggestedName: String,

@@ -51,7 +51,8 @@ final class DownloadManager: NSObject, WKDownloadDelegate {
             return
         }
         let folder = Settings.effectiveDownloadFolder
-        let target = Rook.uniqueDestination(in: folder, suggestedName: suggestedFilename)
+        let type = Rook.fileType(mimeType: response.mimeType)
+        let target = Rook.uniqueDestination(in: folder, suggestedName: Rook.nameWithExtension(suggestedFilename, type: type))
         guard Settings.askWhereToSave else {
             guard FileManager.default.isWritableFile(atPath: folder.path) else {
                 completionHandler(nil)   // cancels; no permission to write into the folder
@@ -65,10 +66,22 @@ final class DownloadManager: NSObject, WKDownloadDelegate {
         let panel = NSSavePanel()
         panel.directoryURL = folder
         panel.nameFieldStringValue = target.lastPathComponent
+        // With the type known, the panel keeps the extension when the name is changed (".jpg" stays).
+        if let type {
+            panel.allowedContentTypes = [type]
+            panel.allowsOtherFileTypes = true
+        }
+        panel.isExtensionHidden = false
         let finish: (NSApplication.ModalResponse) -> Void = { [weak self] response in
-            guard response == .OK, let chosen = panel.url, let self else { completionHandler(nil); return }
-            // NSSavePanel already asked before replacing an existing file.
-            try? FileManager.default.removeItem(at: chosen)
+            guard response == .OK, var chosen = panel.url, let self else { completionHandler(nil); return }
+            let named = Rook.nameWithExtension(chosen.lastPathComponent, type: type)
+            if named != chosen.lastPathComponent {
+                // The panel only asked about the name without extension, so never replace anything here.
+                chosen = Rook.uniqueDestination(in: chosen.deletingLastPathComponent(), suggestedName: named)
+            } else {
+                // NSSavePanel already asked before replacing an existing file.
+                try? FileManager.default.removeItem(at: chosen)
+            }
             self.start(download, at: chosen, completionHandler: completionHandler)
         }
         if let window = download.webView?.window, window.attachedSheet == nil {
