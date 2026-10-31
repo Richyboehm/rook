@@ -48,6 +48,8 @@ enum BrowserAPI {
             case "askWhereToSave": Settings.askWhereToSave = query["value"] == "true"
             case "restoreSession": Settings.restoreSession = query["value"] == "true"
             case "blocker": ContentBlocker.shared.isEnabled = query["value"] == "true"
+            case let key? where key.hasPrefix("list."):
+                ContentBlocker.shared.setList(String(key.dropFirst(5)), enabled: query["value"] == "true")
             default: break
             }
             reply(settings(isPrivate: isPrivate))
@@ -99,6 +101,10 @@ enum BrowserAPI {
         case "/api/make-default":
             Settings.makeDefaultBrowser { reply(settings(isPrivate: isPrivate)) }
 
+        case "/api/onboarding-done":
+            reply(["ok": true])
+            NotificationCenter.default.post(name: .rookOnboardingDone, object: nil)
+
         case "/api/import-bookmarks":
             NSApp.sendAction(Selector(("importBookmarks")), to: nil, from: nil)   // handled by the app delegate
             reply(["ok": true])
@@ -127,7 +133,8 @@ enum BrowserAPI {
             "askWhereToSave": Settings.askWhereToSave,
             "restoreSession": Settings.restoreSession,
             "isDefaultBrowser": Settings.isDefaultBrowser,
-            "blocker": ["enabled": blocker.isEnabled, "status": blocker.status, "exceptions": blocker.allowedSites.sorted()],
+            "blocker": ["enabled": blocker.isEnabled, "status": blocker.status, "exceptions": blocker.allowedSites.sorted(),
+                        "lists": blocker.sources.map { ["id": $0.id, "enabled": !blocker.disabledLists.contains($0.id)] }],
             "sites": sites,
             "historyCount": History.shared.entries.count
         ]
@@ -144,4 +151,9 @@ enum BrowserAPI {
         task.didReceive(data)
         task.didFinish()
     }
+}
+
+extension Notification.Name {
+    /// The start page finished its first setup.
+    static let rookOnboardingDone = Notification.Name("rookOnboardingDone")
 }

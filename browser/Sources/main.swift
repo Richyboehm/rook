@@ -27,8 +27,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         sessionTimer = Timer.scheduledTimer(withTimeInterval: 20, repeats: true) { _ in Session.save() }
         sessionTimer?.tolerance = 5
 
-        if !Settings.welcomeShown {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { [weak self] in self?.showWelcome() }
+        // After the start page's first setup, offer once to become the default browser.
+        NotificationCenter.default.addObserver(forName: .rookOnboardingDone, object: nil, queue: .main) { [weak self] _ in
+            guard !Settings.welcomeShown else { return }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { self?.showWelcome() }
         }
     }
 
@@ -37,8 +39,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         Settings.welcomeShown = true
         guard let window = current?.window else { return }
         let alert = NSAlert()
-        alert.messageText = "Willkommen bei Rook"
-        alert.informativeText = "Rook nutzt die Safari-Engine, blockiert Werbung und Tracker und speichert alles nur auf diesem Mac.\n\nMöchtest du Rook als Standardbrowser verwenden? Links aus anderen Apps öffnen sich dann in Rook."
+        alert.messageText = "Rook als Standardbrowser?"
+        alert.informativeText = "Links aus anderen Apps, zum Beispiel aus Mail, öffnen sich dann in Rook. Lesezeichen aus einem anderen Browser kannst du hier ebenfalls übernehmen."
         alert.addButton(withTitle: "Als Standardbrowser verwenden")
         alert.addButton(withTitle: "Lesezeichen importieren …")
         alert.addButton(withTitle: "Später")
@@ -204,7 +206,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         alert.messageText = "Werbe- und Trackingschutz"
         alert.informativeText = """
         Rook blockiert Werbung und Tracker mit den Filterlisten \(blocker.sources.map(\.name).joined(separator: ", ")) von easylist.to. \
-        Die Listen werden einmal pro Woche direkt von easylist.to geladen – das ist die einzige Verbindung, die Rook selbst aufbaut. \
+        Die Listen werden einmal pro Woche direkt von easylist.to geladen. Das ist die einzige Verbindung, die Rook selbst aufbaut. \
         Welche Seiten du besuchst, erfährt dabei niemand.
 
         Gut geblockt werden Werbebanner, Werbe-Pop-ups und die meisten Tracker.

@@ -18,22 +18,35 @@
       name: "Name", address: "Address", delete: "Delete", cancel: "Cancel", save: "Save", done: "Done",
       confirmDelete: "Delete “{name}”?", invalidUrl: "Please enter a valid web address (http or https).",
       settings: "Settings", general: "General", language: "Language", auto: "Automatic", yourName: "Your name",
-      showClock: "Show time and greeting", search: "Search", engine: "Search engine", look: "Look",
+      showClock: "Show time and greeting", showLogo: "Show Rook logo", search: "Search", engine: "Search engine", look: "Look",
       dim: "Darken background", accent: "Accent color", privacy: "Privacy",
       loadIcons: "Load website logos",
       loadIconsHint: "Logos are fetched from Google’s favicon service, which sees which sites are on your page. Turn this off to show letters instead.",
       backup: "Backup", export: "Export", import: "Import …", restartOnboarding: "Show welcome again",
       resetAll: "Reset everything", confirmReset: "Reset Rook? Your favorites and settings will be removed.",
       importFailed: "This file is not a valid Rook backup.", imageTooBig: "This image is too large. Please choose a smaller one.",
-      editHint: "Tip: hover a favorite and click ✎ to edit it, drag to reorder. Press / to search, 1–9 to open a favorite.",
-      ownImage: "Own image …", skip: "Skip", back: "Back", next: "Next", letsGo: "Let’s go",
+      editHint: "Tip: hover a favorite and click ✎ to edit it, drag to reorder. Press / to search, 1 to 9 to open a favorite.",
+      ownImage: "Own image …", skip: "Skip", back: "Back", next: "Next", letsGo: "Done",
       welcomeTitle: "Welcome to Rook",
-      welcomeText: "Your new tab page – calm, beautiful and private. Everything stays in this browser. Set it up in four quick steps.",
-      whatName: "What should we call you? (optional)",
-      engineTitle: "Choose your search engine", engineText: "You can change this anytime in the settings.",
-      bgTitle: "Pick a background", bgText: "Or use one of your own photos.",
-      favTitle: "Your favorites", favText: "Tap to select the sites you use most. You can add your own later.",
-      settingsLabel: "Settings", privateEngine: "private", treesEngine: "plants trees",
+      welcomeText: "A few settings and you are ready. Everything stays on this device.",
+      whatName: "Your name", namePlaceholder: "Optional",
+      engineTitle: "Search engine", engineText: "Your searches are sent here. You can change it later in the settings.",
+      bgTitle: "Background", bgText: "Choose a motif or one of your own photos.",
+      favTitle: "Favorites", favText: "Select the sites you visit often. You can add more later.",
+      settingsLabel: "Settings",
+      engGoogle: "Most results. Stores searches for advertising.", engDuck: "No tracking, no profiles.",
+      engStartpage: "Google results, requested anonymously.", engEcosia: "Uses ad revenue to plant trees.",
+      engBing: "Search engine by Microsoft.", engBrave: "Own index, no tracking.",
+      introApp: "A lean browser for the Mac, built on the Safari engine. Ads and trackers are blocked before they load, and your data stays on this device.",
+      introWeb: "A calm start page for your browser. No account, no tracking. Everything stays on this device.",
+      introGo: "Get started",
+      blockerTitle: "Ad blocker", blockerText: "Rook blocks ads and trackers inside the Safari engine, before a page loads. The filter lists come from EasyList and are updated weekly.",
+      listEasylist: "Ads", listEasylistDesc: "Banners and pop-ups on most websites.",
+      listEasyprivacy: "Trackers", listEasyprivacyDesc: "Stops companies from following you across websites.",
+      listEasylistgermany: "German websites", listEasylistgermanyDesc: "Extra rules for ads on German sites.",
+      blockerHint: "If a site does not work properly, turn the blocker off there with the shield in the address bar.",
+      filterLists: "Filter lists", update: "Update", history: "History", cookies: "Cookies and website data",
+      cookiesHint: "Signs you out of all websites", exportSettings: "Save a backup", importSettings: "Load a backup",
       recent: "Recently visited", weather: "Weather", showWeather: "Show weather", weatherCity: "City",
       weatherHint: "For this, your city is sent to open-meteo.com (free weather service, no account). Off by default.",
       weatherError: "Weather not available",
@@ -48,8 +61,8 @@
       makeDefault: "Make Rook the default browser", importBookmarks: "Import bookmarks …",
       appOnlyHint: "Downloads, ad blocker and history settings are available in the Rook app for Mac.",
       blocker: "Ad & tracker blocker", blockerToggle: "Block ads and trackers", updateLists: "Update filter lists now",
-      updating: "Updating …", exceptions: "Not blocked on these sites", noExceptions: "None – blocking everywhere",
-      remove: "Remove", historyTitle: "History & website data", historyInfo: "{n} pages in your history.",
+      updating: "Updating …", exceptions: "Not blocked on these sites", noExceptions: "None. Rook blocks on every website.",
+      remove: "Remove", historyTitle: "History and website data", historyInfo: "{n} pages",
       clearHistory: "Delete history completely", clearData: "Delete cookies & website data",
       confirmClearHistory: "Delete your entire history? Visited pages, recently closed tabs, address bar suggestions and “Recently visited” are removed from this Mac. This cannot be undone.",
       confirmClearData: "Delete all cookies and website data? You will be signed out of all websites. Your start page stays as it is.",
@@ -64,22 +77,35 @@
       name: "Name", address: "Adresse", delete: "Löschen", cancel: "Abbrechen", save: "Sichern", done: "Fertig",
       confirmDelete: "„{name}“ löschen?", invalidUrl: "Bitte eine gültige Webadresse eingeben (http oder https).",
       settings: "Einstellungen", general: "Allgemein", language: "Sprache", auto: "Automatisch", yourName: "Dein Name",
-      showClock: "Uhrzeit und Begrüßung anzeigen", search: "Suche", engine: "Suchmaschine", look: "Aussehen",
+      showClock: "Uhrzeit und Begrüßung anzeigen", showLogo: "Rook-Logo anzeigen", search: "Suche", engine: "Suchmaschine", look: "Aussehen",
       dim: "Hintergrund abdunkeln", accent: "Akzentfarbe", privacy: "Datenschutz",
       loadIcons: "Logos der Websites laden",
       loadIconsHint: "Die Logos kommen vom Favicon-Dienst von Google. Google sieht dadurch, welche Seiten auf deiner Startseite sind. Ausgeschaltet erscheinen stattdessen Buchstaben.",
       backup: "Sicherung", export: "Exportieren", import: "Importieren …", restartOnboarding: "Begrüßung erneut zeigen",
       resetAll: "Alles zurücksetzen", confirmReset: "Rook zurücksetzen? Deine Favoriten und Einstellungen werden gelöscht.",
       importFailed: "Diese Datei ist keine gültige Rook-Sicherung.", imageTooBig: "Das Bild ist zu groß. Bitte ein kleineres wählen.",
-      editHint: "Tipp: Mit der Maus über einen Favoriten fahren und auf ✎ klicken, zum Umsortieren ziehen. / springt in die Suche, 1–9 öffnet Favoriten.",
-      ownImage: "Eigenes Bild …", skip: "Überspringen", back: "Zurück", next: "Weiter", letsGo: "Los geht’s",
+      editHint: "Tipp: Mit der Maus über einen Favoriten fahren und auf ✎ klicken, zum Umsortieren ziehen. / springt in die Suche, 1 bis 9 öffnet Favoriten.",
+      ownImage: "Eigenes Bild …", skip: "Überspringen", back: "Zurück", next: "Weiter", letsGo: "Fertig",
       welcomeTitle: "Willkommen bei Rook",
-      welcomeText: "Deine neue Startseite – ruhig, schön und privat. Alles bleibt in diesem Browser. In vier kurzen Schritten eingerichtet.",
-      whatName: "Wie sollen wir dich nennen? (optional)",
-      engineTitle: "Wähle deine Suchmaschine", engineText: "Das kannst du jederzeit in den Einstellungen ändern.",
-      bgTitle: "Such dir einen Hintergrund aus", bgText: "Oder nimm ein eigenes Foto.",
-      favTitle: "Deine Favoriten", favText: "Tippe die Seiten an, die du am meisten nutzt. Eigene kannst du später ergänzen.",
-      settingsLabel: "Einstellungen", privateEngine: "privat", treesEngine: "pflanzt Bäume",
+      welcomeText: "Ein paar Einstellungen, dann kann es losgehen. Alles bleibt auf diesem Gerät.",
+      whatName: "Dein Name", namePlaceholder: "Optional",
+      engineTitle: "Suchmaschine", engineText: "Hierhin gehen deine Suchanfragen. Du kannst das später in den Einstellungen ändern.",
+      bgTitle: "Hintergrund", bgText: "Wähle ein Motiv oder ein eigenes Foto.",
+      favTitle: "Favoriten", favText: "Wähle die Seiten, die du oft besuchst. Weitere kannst du später hinzufügen.",
+      settingsLabel: "Einstellungen",
+      engGoogle: "Die meisten Ergebnisse. Speichert Suchanfragen für Werbung.", engDuck: "Kein Tracking, keine Profile.",
+      engStartpage: "Google-Ergebnisse, anonym abgefragt.", engEcosia: "Finanziert mit Werbeeinnahmen Baumpflanzungen.",
+      engBing: "Suchmaschine von Microsoft.", engBrave: "Eigener Index, kein Tracking.",
+      introApp: "Ein schlanker Browser für den Mac, gebaut auf der Safari-Engine. Werbung und Tracker werden blockiert, bevor sie laden, und deine Daten bleiben auf diesem Gerät.",
+      introWeb: "Eine ruhige Startseite für deinen Browser. Kein Konto, kein Tracking. Alles bleibt auf diesem Gerät.",
+      introGo: "Loslegen",
+      blockerTitle: "Werbeblocker", blockerText: "Rook blockiert Werbung und Tracker direkt in der Safari-Engine, bevor eine Seite lädt. Die Filterlisten stammen von EasyList und werden wöchentlich aktualisiert.",
+      listEasylist: "Werbung", listEasylistDesc: "Banner und Pop-ups auf den meisten Websites.",
+      listEasyprivacy: "Tracker", listEasyprivacyDesc: "Verhindert, dass Firmen dir über Websites hinweg folgen.",
+      listEasylistgermany: "Deutsche Websites", listEasylistgermanyDesc: "Zusätzliche Regeln für Werbung auf deutschen Seiten.",
+      blockerHint: "Funktioniert eine Seite nicht richtig, schalte den Blocker dort über das Schild in der Adressleiste aus.",
+      filterLists: "Filterlisten", update: "Aktualisieren", history: "Verlauf", cookies: "Cookies und Website-Daten",
+      cookiesHint: "Meldet dich auf allen Websites ab", exportSettings: "Sicherung speichern", importSettings: "Sicherung laden",
       recent: "Zuletzt besucht", weather: "Wetter", showWeather: "Wetter anzeigen", weatherCity: "Stadt",
       weatherHint: "Dafür wird deine Stadt an open-meteo.com geschickt (kostenloser Wetterdienst, kein Konto). Standardmäßig aus.",
       weatherError: "Wetter nicht verfügbar",
@@ -94,8 +120,8 @@
       makeDefault: "Rook als Standardbrowser festlegen", importBookmarks: "Lesezeichen importieren …",
       appOnlyHint: "Einstellungen zu Downloads, Werbeblocker und Verlauf gibt es in der Rook-App für den Mac.",
       blocker: "Werbe- und Trackingschutz", blockerToggle: "Werbung und Tracker blockieren", updateLists: "Filterlisten jetzt aktualisieren",
-      updating: "Wird aktualisiert …", exceptions: "Auf diesen Websites nicht blockieren", noExceptions: "Keine – überall wird blockiert",
-      remove: "Entfernen", historyTitle: "Verlauf und Website-Daten", historyInfo: "{n} Seiten im Verlauf.",
+      updating: "Wird aktualisiert …", exceptions: "Auf diesen Websites nicht blockieren", noExceptions: "Keine. Rook blockiert auf allen Websites.",
+      remove: "Entfernen", historyTitle: "Verlauf und Website-Daten", historyInfo: "{n} Seiten",
       clearHistory: "Verlauf restlos löschen", clearData: "Cookies und Website-Daten löschen",
       confirmClearHistory: "Den gesamten Verlauf löschen? Besuchte Seiten, zuletzt geschlossene Tabs, Vorschläge in der Adressleiste und „Zuletzt besucht“ werden von diesem Mac entfernt. Das lässt sich nicht rückgängig machen.",
       confirmClearData: "Alle Cookies und Website-Daten löschen? Du wirst auf allen Websites abgemeldet. Deine Startseite bleibt, wie sie ist.",
@@ -108,12 +134,12 @@
   // ---------------------------------------------------------------- data
 
   var ENGINES = {
-    google: { name: "Google", url: "https://www.google.com/search?q=" },
-    duckduckgo: { name: "DuckDuckGo", url: "https://duckduckgo.com/?q=", tag: "privateEngine" },
-    startpage: { name: "Startpage", url: "https://www.startpage.com/do/search?q=", tag: "privateEngine" },
-    ecosia: { name: "Ecosia", url: "https://www.ecosia.org/search?q=", tag: "treesEngine" },
-    bing: { name: "Bing", url: "https://www.bing.com/search?q=" },
-    brave: { name: "Brave Search", url: "https://search.brave.com/search?q=", tag: "privateEngine" }
+    google: { name: "Google", url: "https://www.google.com/search?q=", desc: "engGoogle" },
+    duckduckgo: { name: "DuckDuckGo", url: "https://duckduckgo.com/?q=", desc: "engDuck" },
+    startpage: { name: "Startpage", url: "https://www.startpage.com/do/search?q=", desc: "engStartpage" },
+    ecosia: { name: "Ecosia", url: "https://www.ecosia.org/search?q=", desc: "engEcosia" },
+    bing: { name: "Bing", url: "https://www.bing.com/search?q=", desc: "engBing" },
+    brave: { name: "Brave Search", url: "https://search.brave.com/search?q=", desc: "engBrave" }
   };
 
   var BACKGROUNDS = [
@@ -161,7 +187,7 @@
   function defaults() {
     var lang = detectLang();
     return {
-      version: 1, onboarded: false, lang: "auto", name: "", showClock: true,
+      version: 1, onboarded: false, lang: "auto", name: "", showClock: true, showLogo: true,
       engine: "google", engineChangedAt: 0, bg: "obsidian", dim: 30, accent: ACCENTS[0], icons: true,
       weatherOn: false, weatherCity: "", showFavs: true, showRecent: true,
       favorites: presets(lang).filter(function (p) { return DEFAULT_PICKS.indexOf(p.name) >= 0; })
@@ -177,6 +203,7 @@
     s.lang = ["auto", "en", "de"].indexOf(raw.lang) >= 0 ? raw.lang : d.lang;
     s.name = typeof raw.name === "string" ? raw.name.slice(0, 30) : d.name;
     s.showClock = typeof raw.showClock === "boolean" ? raw.showClock : d.showClock;
+    s.showLogo = typeof raw.showLogo === "boolean" ? raw.showLogo : d.showLogo;
     s.engine = ENGINES[raw.engine] ? raw.engine : d.engine;
     s.bg = raw.bg === "custom" || BACKGROUNDS.some(function (b) { return b.id === raw.bg; }) ? raw.bg : d.bg;
     s.dim = typeof raw.dim === "number" && raw.dim >= 0 && raw.dim <= 80 ? raw.dim : d.dim;
@@ -287,6 +314,7 @@
   // ---------------------------------------------------------------- clock
 
   function tick() {
+    $("mark").hidden = !state.showLogo;
     $("clock").hidden = $("greeting").hidden = !state.showClock;
     if (!state.showClock) return;
     var d = new Date(), h = d.getHours();
@@ -473,6 +501,7 @@
     $("sLang").value = state.lang;
     $("sName").value = state.name;
     $("sClock").checked = state.showClock;
+    $("sLogo").checked = state.showLogo;
     $("sEngine").value = state.engine;
     $("sDim").value = state.dim;
     $("sIcons").checked = state.icons;
@@ -527,6 +556,21 @@
     return fetch("api/" + path, { cache: "no-store" }).then(function (r) { return r.json(); });
   }
 
+  // A row with name, short description and a switch for one filter list (settings and onboarding).
+  function listSwitch(id, on, onChange) {
+    var key = "list" + id.charAt(0).toUpperCase() + id.slice(1);
+    var item = el("label", "item");
+    var txt = el("span", "item-text", t(key));
+    txt.appendChild(el("small", null, t(key + "Desc")));
+    item.appendChild(txt);
+    var sw = el("input", "switch");
+    sw.type = "checkbox";
+    sw.checked = on;
+    sw.addEventListener("change", function () { onChange(sw.checked); });
+    item.appendChild(sw);
+    return item;
+  }
+
   function loadBrowserSettings() {
     if (!inApp) return;
     api("settings.json").then(showBrowserSettings).catch(function () {});
@@ -545,35 +589,49 @@
     $("sBlockerStatus").textContent = s.blocker.status;
     $("sHistoryInfo").textContent = t("historyInfo", { n: s.historyCount });
 
+    // One row per site: name (and details) on the left, a text button on the right.
+    function row(title, detail, label, onClick) {
+      var item = el("div", "item");
+      var txt = el("span", "item-text", title);
+      if (detail) txt.appendChild(el("small", null, detail));
+      item.appendChild(txt);
+      var b = el("button", "link", label);
+      b.type = "button";
+      b.addEventListener("click", onClick);
+      item.appendChild(b);
+      return item;
+    }
+
+    // One switch per filter list, between the main switch and the status row.
+    var group = $("sBlockerGroup");
+    Array.prototype.slice.call(group.querySelectorAll(".list-item")).forEach(function (n) { n.remove(); });
+    (s.blocker.lists || []).forEach(function (l) {
+      var item = listSwitch(l.id, l.enabled, function (on) { api("set?key=list." + l.id + "&value=" + on).then(showBrowserSettings); });
+      item.classList.add("list-item");
+      item.querySelector("input").disabled = !s.blocker.enabled;
+      group.insertBefore(item, $("sBlockerStatusRow"));
+    });
+
     var ex = $("sExceptions");
     ex.textContent = "";
-    if (!s.blocker.exceptions.length) ex.appendChild(el("li", "empty", t("noExceptions")));
+    if (!s.blocker.exceptions.length) ex.appendChild(el("div", "item empty", t("noExceptions")));
     s.blocker.exceptions.forEach(function (site) {
-      var li = el("li");
-      li.appendChild(el("span", "grow", site));
-      var b = el("button", "btn", t("remove"));
-      b.type = "button";
-      b.addEventListener("click", function () { api("blocker-remove-exception?site=" + encodeURIComponent(site)).then(showBrowserSettings); });
-      li.appendChild(b);
-      ex.appendChild(li);
+      ex.appendChild(row(site, "", t("remove"), function () {
+        api("blocker-remove-exception?site=" + encodeURIComponent(site)).then(showBrowserSettings);
+      }));
     });
 
     var sites = $("sSites");
     sites.textContent = "";
-    if (!s.sites.length) sites.appendChild(el("li", "empty", t("noSitePermissions")));
+    if (!s.sites.length) sites.appendChild(el("div", "item empty", t("noSitePermissions")));
     s.sites.forEach(function (x) {
-      var li = el("li");
-      li.appendChild(el("span", "grow", x.site));
       var parts = [];
       if (x.camera) parts.push(t("camera") + " " + t(x.camera === "allow" ? "allowed" : "denied"));
       if (x.microphone) parts.push(t("microphone") + " " + t(x.microphone === "allow" ? "allowed" : "denied"));
       if (x.zoom) parts.push(t("zoom") + " " + x.zoom + " %");
-      li.appendChild(el("span", "meta", parts.join(" · ")));
-      var b = el("button", "btn", t("reset"));
-      b.type = "button";
-      b.addEventListener("click", function () { api("forget-site?site=" + encodeURIComponent(x.site)).then(showBrowserSettings); });
-      li.appendChild(b);
-      sites.appendChild(li);
+      sites.appendChild(row(x.site, parts.join(", "), t("reset"), function () {
+        api("forget-site?site=" + encodeURIComponent(x.site)).then(showBrowserSettings);
+      }));
     });
   }
 
@@ -606,6 +664,7 @@
   $("sLang").addEventListener("change", function () { state.lang = this.value; save(); refresh(); renderSettings(); });
   $("sName").addEventListener("input", function () { state.name = this.value.trim().slice(0, 30); save(); tick(); });
   $("sClock").addEventListener("change", function () { state.showClock = this.checked; save(); tick(); });
+  $("sLogo").addEventListener("change", function () { state.showLogo = this.checked; save(); tick(); });
   $("sEngine").addEventListener("change", function () {
     state.engine = this.value; state.engineChangedAt = Date.now(); save(); applyTexts();
     if (inApp) api("set?key=engine&value=" + encodeURIComponent(this.value));
@@ -734,29 +793,59 @@
     };
     reader.readAsText(file);
   });
-  $("sRestart").addEventListener("click", function () { hide("setDialog"); startOnboarding(); });
+  $("sRestart").addEventListener("click", function () { hide("setDialog"); startOnboarding(true); });
   $("sReset").addEventListener("click", function () {
     if (!confirm(t("confirmReset"))) return;
     try { localStorage.removeItem(KEY); localStorage.removeItem(BG_KEY); } catch (e) {}
     state = defaults();
     hide("setDialog");
     refresh();
-    startOnboarding();
+    startOnboarding(true);
   });
 
   // ---------------------------------------------------------------- onboarding
 
   var ob = null;
-  var STEPS = ["welcome", "engine", "background", "favorites"];
+  // The ad blocker only exists inside the Rook app.
+  var STEPS = inApp ? ["welcome", "engine", "blocker", "background", "favorites"] : ["welcome", "engine", "background", "favorites"];
+  var BLOCKER_LISTS = ["easylist", "easyprivacy", "easylistgermany"];
 
-  function startOnboarding() {
+  function startOnboarding(withIntro) {
     var picks = {};
     state.favorites.forEach(function (f) { picks[f.name] = f.url; });
-    ob = { step: 0, name: state.name, engine: state.engine, bg: state.bg, picks: picks };
+    var lists = {};
+    BLOCKER_LISTS.forEach(function (id) { lists[id] = true; });
+    ob = { step: 0, name: state.name, engine: state.engine, bg: state.bg, picks: picks, lists: lists };
     $("home").hidden = true;
     $("gear").hidden = true;
+    if (inApp) {
+      api("settings.json").then(function (s) {
+        (s.blocker.lists || []).forEach(function (l) { if (ob) ob.lists[l.id] = s.blocker.enabled && l.enabled; });
+        if (ob && STEPS[ob.step] === "blocker") renderStep();
+      }).catch(function () {});
+    }
+    if (withIntro) playIntro(); else openSteps();
+  }
+
+  function openSteps() {
     show("onboarding");
     renderStep();
+  }
+
+  // First start: the raven, the name and two sentences, then the setup.
+  function playIntro() {
+    var intro = $("intro");
+    $("introText").textContent = t(inApp ? "introApp" : "introWeb");
+    intro.classList.remove("leaving", "skip");
+    intro.hidden = false;
+    // A click anywhere before the button appears shows everything at once.
+    intro.onclick = function (e) { if (e.target.id !== "introGo") intro.classList.add("skip"); };
+    $("introGo").onclick = function () {
+      intro.classList.add("leaving");
+      openSteps();
+      setTimeout(function () { intro.hidden = true; }, 500);
+    };
+    setTimeout(function () { $("introGo").focus(); }, 2400);
   }
 
   function renderStep() {
@@ -768,17 +857,20 @@
     STEPS.forEach(function (s, i) { dots.appendChild(el("span", i <= ob.step ? "on" : "")); });
 
     if (step === "welcome") {
+      var head = el("div", "ob-head");
       var logo = el("img", "logo");
       logo.src = "assets/logo.png";
       logo.alt = "";
-      body.appendChild(logo);
-      body.appendChild(el("h1", null, t("welcomeTitle")));
-      body.appendChild(el("p", null, t("welcomeText")));
+      head.appendChild(logo);
+      head.appendChild(el("h1", null, t("welcomeTitle")));
+      body.appendChild(head);
+      body.appendChild(el("p", "ob-sub", t("welcomeText")));
       var lbl = el("label", null, t("whatName"));
       lbl.htmlFor = "obName";
       var inp = el("input");
       inp.type = "text";
       inp.id = "obName";
+      inp.placeholder = t("namePlaceholder");
       inp.maxLength = 30;
       inp.value = ob.name;
       inp.addEventListener("input", function () { ob.name = inp.value.trim(); });
@@ -790,24 +882,41 @@
 
     if (step === "engine") {
       body.appendChild(el("h2", null, t("engineTitle")));
-      body.appendChild(el("p", null, t("engineText")));
-      var grid = el("div", "choices");
+      body.appendChild(el("p", "ob-sub", t("engineText")));
+      var list = el("div", "engines");
+      list.setAttribute("role", "radiogroup");
       Object.keys(ENGINES).forEach(function (k) {
-        var e = ENGINES[k], c = el("button", "choice" + (ob.engine === k ? " on" : ""));
-        c.type = "button";
-        c.appendChild(siteIcon(e.name, e.url, 64));
-        var txt = el("div", null, e.name);
-        if (e.tag) txt.appendChild(el("small", null, t(e.tag)));
-        c.appendChild(txt);
-        c.addEventListener("click", function () { ob.engine = k; renderStep(); });
-        grid.appendChild(c);
+        var e = ENGINES[k], on = ob.engine === k;
+        var row = el("button", "engine");
+        row.type = "button";
+        row.setAttribute("role", "radio");
+        row.setAttribute("aria-checked", on ? "true" : "false");
+        row.appendChild(siteIcon(e.name, e.url, 64));
+        var txt = el("div", "engine-text");
+        txt.appendChild(el("div", "engine-name", e.name));
+        txt.appendChild(el("div", "engine-desc", t(e.desc)));
+        row.appendChild(txt);
+        row.appendChild(el("span", "tick", on ? "✓" : ""));
+        row.addEventListener("click", function () { ob.engine = k; renderStep(); });
+        list.appendChild(row);
       });
-      body.appendChild(grid);
+      body.appendChild(list);
+    }
+
+    if (step === "blocker") {
+      body.appendChild(el("h2", null, t("blockerTitle")));
+      body.appendChild(el("p", "ob-sub", t("blockerText")));
+      var group = el("div", "group");
+      BLOCKER_LISTS.forEach(function (id) {
+        group.appendChild(listSwitch(id, ob.lists[id], function (on) { ob.lists[id] = on; }));
+      });
+      body.appendChild(group);
+      body.appendChild(el("p", "ob-hint", t("blockerHint")));
     }
 
     if (step === "background") {
       body.appendChild(el("h2", null, t("bgTitle")));
-      body.appendChild(el("p", null, t("bgText")));
+      body.appendChild(el("p", "ob-sub", t("bgText")));
       var bgs = el("div", "bgs");
       renderBgPicker(bgs, ob.bg, function (id) { ob.bg = id; applyLook(id); renderStep(); });
       body.appendChild(bgs);
@@ -815,7 +924,7 @@
 
     if (step === "favorites") {
       body.appendChild(el("h2", null, t("favTitle")));
-      body.appendChild(el("p", null, t("favText")));
+      body.appendChild(el("p", "ob-sub", t("favText")));
       var picks = el("div", "picks");
       presets(lang()).forEach(function (p) {
         var on = Object.prototype.hasOwnProperty.call(ob.picks, p.name);
@@ -853,7 +962,14 @@
         if (!chosen.some(function (c) { return c.name === n; })) chosen.push({ name: n, url: ob.picks[n] });
       });
       state.favorites = chosen;
+      if (inApp) {
+        var any = BLOCKER_LISTS.some(function (id) { return ob.lists[id]; });
+        BLOCKER_LISTS.forEach(function (id) { if (any) api("set?key=list." + id + "&value=" + ob.lists[id]); });
+        api("set?key=blocker&value=" + any);
+      }
     }
+    // Tells the app that the setup is done (it then offers to become the default browser once).
+    if (inApp) api("onboarding-done").catch(function () {});
     state.onboarded = true;
     save();
     ob = null;
@@ -880,7 +996,7 @@
   }
 
   document.body.classList.toggle("in-app", inApp);
-  if (state.onboarded) refresh(); else { applyTexts(); applyLook(); startOnboarding(); }
+  if (state.onboarded) refresh(); else { applyTexts(); applyLook(); startOnboarding(true); }
   setInterval(tick, 10000);
 
   // ⌘, in the Rook app opens the start page with #settings.

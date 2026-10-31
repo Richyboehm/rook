@@ -44,6 +44,31 @@ final class ContentBlocker {
         set { UserDefaults.standard.set(newValue, forKey: "blockerEnabled"); applyAll() }
     }
 
+    /// Lists the user switched off (by id). They stay compiled, so switching them on again is instant.
+    var disabledLists: Set<String> {
+        get { Set(UserDefaults.standard.stringArray(forKey: "blockerDisabledLists") ?? []) }
+        set { UserDefaults.standard.set(Array(newValue).sorted(), forKey: "blockerDisabledLists"); applyAll() }
+    }
+
+    func setList(_ id: String, enabled: Bool) {
+        guard sources.contains(where: { $0.id == id }) else { return }
+        var off = disabledLists
+        if enabled { off.remove(id) } else { off.insert(id) }
+        disabledLists = off
+    }
+
+    /// Rules per list, so the status only counts the lists that are switched on.
+    private var ruleCounts: [String: Int] {
+        get { UserDefaults.standard.dictionary(forKey: "blockerRuleCounts") as? [String: Int] ?? [:] }
+        set { UserDefaults.standard.set(newValue, forKey: "blockerRuleCounts") }
+    }
+
+    var activeRuleCount: Int {
+        let counts = ruleCounts
+        if counts.isEmpty { return ruleCount }
+        return sources.filter { !disabledLists.contains($0.id) }.reduce(0) { $0 + (counts[$1.id] ?? 0) }
+    }
+
     /// Sites (host names without "www.") where the user switched blocking off.
     var allowedSites: [String] {
         get { UserDefaults.standard.stringArray(forKey: "blockerAllowedSites") ?? [] }
@@ -76,9 +101,10 @@ final class ContentBlocker {
         if !isEnabled { return "Werbeblocker aus" }
         if let problem { return problem }
         if lists.isEmpty { return working ? "Filterlisten werden geladen …" : "Noch keine Filterlisten" }
+        if sources.allSatisfy({ disabledLists.contains($0.id) }) { return "Alle Filterlisten aus" }
         let f = NumberFormatter(); f.numberStyle = .decimal; f.locale = Locale(identifier: "de_DE")
         let date = lastUpdate.map { DateFormatter.localizedString(from: $0, dateStyle: .medium, timeStyle: .none) } ?? "–"
-        return "Aktiv · \(f.string(from: NSNumber(value: ruleCount)) ?? "\(ruleCount)") Regeln · Stand \(date)"
+        return "Aktiv · \(f.string(from: NSNumber(value: activeRuleCount)) ?? "\(activeRuleCount)") Regeln · Stand \(date)"
     }
 
     // MARK: Start
@@ -142,7 +168,7 @@ final class ContentBlocker {
             DispatchQueue.main.async {
                 if converted.isEmpty {
                     self.working = false
-                    self.problem = downloadFailed ? "Filterlisten konnten nicht geladen werden – keine Internetverbindung?" : nil
+                    self.problem = downloadFailed ? "Filterlisten konnten nicht geladen werden. Besteht eine Internetverbindung?" : nil
                     done()
                     return
                 }
@@ -155,11 +181,12 @@ final class ContentBlocker {
         let group = DispatchGroup()
         var newLists: [String: WKContentRuleList] = [:]
         var count = 0
+        var counts = ruleCounts
         var errors: [String] = []
         for (source, json, rules) in items {
             group.enter()
             store.compileContentRuleList(forIdentifier: identifier(source), encodedContentRuleList: json) { list, error in
-                if let list { newLists[source.id] = list; count += rules } else { errors.append(source.name) }
+                if let list { newLists[source.id] = list; count += rules; counts[source.id] = rules } else { errors.append(source.name) }
                 if let error { NSLog("Rook blocker: \(source.id) failed: \(error.localizedDescription)") }
                 group.leave()
             }
@@ -170,11 +197,12 @@ final class ContentBlocker {
             if !newLists.isEmpty {
                 ruleCount = count
                 UserDefaults.standard.set(count, forKey: "blockerRuleCount")
+                ruleCounts = counts
                 UserDefaults.standard.set(FilterConverter.version, forKey: "blockerConverterVersion")
                 if !downloadFailed { UserDefaults.standard.set(Date(), forKey: "blockerLastUpdate") }
             }
             if !errors.isEmpty { problem = "Fehler in: " + errors.joined(separator: ", ") }
-            else if downloadFailed { problem = "Aktualisierung fehlgeschlagen – ältere Listen aktiv" }
+            else if downloadFailed { problem = "Aktualisierung fehlgeschlagen, die vorherigen Listen bleiben aktiv" }
             working = false
             applyAll()
             done()
@@ -205,7 +233,8 @@ final class ContentBlocker {
     private func apply(to controller: WKUserContentController) {
         controller.removeAllContentRuleLists()
         guard isEnabled else { return }
-        for source in sources { if let list = lists[source.id] { controller.add(list) } }
+        let off = disabledLists
+        for source in sources where !off.contains(source.id) { if let list = lists[source.id] { controller.add(list) } }
     }
 
     private func applyAll() {

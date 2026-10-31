@@ -312,7 +312,7 @@ final class DownloadsViewController: NSViewController {
         case .finished:
             let size = (try? item.file?.resourceValues(forKeys: [.fileSizeKey]).fileSize).flatMap { $0 } ?? 0
             return "Fertig · " + f.string(fromByteCount: Int64(size))
-        case .failed: return "Fehlgeschlagen – Verbindung unterbrochen?"
+        case .failed: return "Fehlgeschlagen, Verbindung unterbrochen"
         case .cancelled: return "Abgebrochen"
         case .paused: return "Pausiert · " + f.string(fromByteCount: item.progress.completedUnitCount)
         case .running:

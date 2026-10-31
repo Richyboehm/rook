@@ -109,6 +109,15 @@ let lastTrigger = (converted.rules.last?["trigger"] as? [String: Any])?["if-top-
 check(lastTrigger?.first?.contains("meine-seite\\.de") == true, "Ausnahme pro Website steht ganz am Ende")
 check(ContentBlocker.site(of: URL(string: "https://www.spiegel.de/x")) == "spiegel.de", "Website-Name ohne www.")
 check(ContentBlocker.site(of: URL(string: "rook://start/")) == nil, "Startseite hat keine Ausnahme")
+let blocker = ContentBlocker.shared
+let listsBefore = blocker.disabledLists
+blocker.setList("easyprivacy", enabled: false)
+check(blocker.disabledLists.contains("easyprivacy"), "Tracker-Liste lässt sich einzeln ausschalten")
+blocker.setList("easyprivacy", enabled: true)
+check(!blocker.disabledLists.contains("easyprivacy"), "Tracker-Liste lässt sich wieder einschalten")
+blocker.setList("boese-liste", enabled: false)
+check(!blocker.disabledLists.contains("boese-liste"), "Unbekannte Liste wird ignoriert")
+blocker.disabledLists = listsBefore
 
 // MARK: Settings interface: only the start page may use it
 

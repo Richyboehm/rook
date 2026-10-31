@@ -136,7 +136,7 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSToo
         toolbar.allowsUserCustomization = false
         window?.toolbar = toolbar
 
-        addressField.placeholderString = isPrivate ? "Privat – suchen oder Adresse eingeben" : "Suchen oder Adresse eingeben"
+        addressField.placeholderString = isPrivate ? "Privat: Suchen oder Adresse eingeben" : "Suchen oder Adresse eingeben"
         addressField.bezelStyle = .roundedBezel
         addressField.font = .systemFont(ofSize: 13)
         addressField.alignment = .center
@@ -397,7 +397,7 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSToo
         } else {
             securityIcon.image = NSImage(systemSymbolName: "exclamationmark.triangle.fill", accessibilityDescription: "Nicht sicher")
             securityIcon.contentTintColor = .systemOrange
-            securityIcon.toolTip = "Nicht sicher – die Verbindung ist ganz oder teilweise unverschlüsselt"
+            securityIcon.toolTip = "Nicht sicher. Die Verbindung ist ganz oder teilweise unverschlüsselt."
         }
     }
 
@@ -413,8 +413,8 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSToo
         shieldButton.image = NSImage(systemSymbolName: allowed ? "shield.slash" : "shield.lefthalf.filled",
                                      accessibilityDescription: allowed ? "Werbeblocker hier aus" : "Werbeblocker aktiv")
         shieldButton.contentTintColor = allowed ? .tertiaryLabelColor : (isPrivate ? .systemPurple : .controlAccentColor)
-        shieldButton.toolTip = allowed ? "Werbung wird auf dieser Website nicht blockiert – klicken zum Einschalten"
-                                       : "Werbung und Tracker werden blockiert – klicken, um sie hier zu erlauben"
+        shieldButton.toolTip = allowed ? "Werbung wird auf dieser Website nicht blockiert. Klicken zum Einschalten."
+                                       : "Werbung und Tracker werden blockiert. Klicken, um sie hier zu erlauben."
     }
 
     @objc func toggleBlockingForSite() {
@@ -502,7 +502,7 @@ final class BrowserWindowController: NSWindowController, NSWindowDelegate, NSToo
         Favorites.add(name: tab.title, url: url)
         let popover = NSPopover()
         popover.behavior = .transient
-        let label = NSTextField(labelWithString: "★ Zu Favoriten hinzugefügt – erscheint auf der Startseite")
+        let label = NSTextField(labelWithString: "★ Zu Favoriten hinzugefügt")
         label.font = .systemFont(ofSize: 12)
         let vc = NSViewController()
         vc.view = NSView(frame: NSRect(x: 0, y: 0, width: 360, height: 34))
