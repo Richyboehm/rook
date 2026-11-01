@@ -52,18 +52,19 @@ final class HeadphoneMonitor: NSObject, CBCentralManagerDelegate {
         startup = true
         registration = IOBluetoothDevice.register(forConnectNotifications: self, selector: #selector(connected(_:device:)))
         // Beim Anmelden meldet das System alle schon verbundenen Geräte; die nicht anzeigen.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) { MainActor.assumeIsolated { self.startup = false } }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3) { MainActor.assumeIsolated { self.startup = false } }
     }
 
-    @objc private func connected(_ notification: IOBluetoothUserNotification, device: IOBluetoothDevice) {
-        MainActor.assumeIsolated {
-            guard !startup, device.deviceClassMajor == kBluetoothDeviceClassMajorAudio else { return }
-            let name = device.name ?? "Kopfhörer"
-            // Kurz warten: Der Akkustand kommt erst einen Moment nach dem Verbinden.
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                MainActor.assumeIsolated {
-                    self.onConnect?(Headphones(name: name, symbol: Self.symbol(for: name), battery: Self.battery(of: device)))
-                }
+    /// IOBluetooth meldet das Verbinden über die Warteschlange von CoreBluetooth, nicht
+    /// über den Hauptthread. Deshalb erst dorthin wechseln, bevor etwas angefasst wird.
+    @objc nonisolated private func connected(_ notification: IOBluetoothUserNotification, device: IOBluetoothDevice) {
+        guard device.deviceClassMajor == kBluetoothDeviceClassMajorAudio else { return }
+        let name = device.name ?? "Kopfhörer"
+        // Kurz warten: Der Akkustand kommt erst einen Moment nach dem Verbinden.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            MainActor.assumeIsolated {
+                guard !self.startup else { return }
+                self.onConnect?(Headphones(name: name, symbol: Self.symbol(for: name), battery: Self.battery(of: device)))
             }
         }
     }

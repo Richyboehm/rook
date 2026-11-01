@@ -62,7 +62,11 @@ struct ControlCenterView: View {
     private var overview: some View {
         VStack(alignment: .leading, spacing: 20) {
             HStack(spacing: 14) {
-                Image(nsImage: NSApp.applicationIconImage).resizable().frame(width: 56, height: 56)
+                // Das eigene Logo direkt aus der App: NSApp.applicationIconImage liefert je nach
+                // Symbolstil (z. B. „Klar“) eine umgefärbte Glas-Version.
+                Image(nsImage: Bundle.main.url(forResource: "AppIcon", withExtension: "icns")
+                    .flatMap(NSImage.init(contentsOf:)) ?? NSApp.applicationIconImage)
+                    .resizable().frame(width: 56, height: 56)
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Richy").font(.system(size: 24, weight: .semibold))
                     Text("Alle Funktionen auf einen Blick.").foregroundStyle(.secondary)
