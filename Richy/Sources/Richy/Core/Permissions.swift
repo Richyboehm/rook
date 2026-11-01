@@ -38,7 +38,7 @@ final class Permissions: NSObject, ObservableObject, CBCentralManagerDelegate {
         var usedBy: String {
             switch self {
             case .spotify: "Musik auf Sperrbildschirm, StandBy und Notch"
-            case .accessibility: "Fensterholer (Cmd + Tab)"
+            case .accessibility: "Fensterholer (Cmd + Tab) und Mausrad"
             case .screenRecording: "Screenshots aus der Notch"
             case .calendar: "Termine in Notch und StandBy"
             case .bluetooth: "AirPods-Anzeige in der Notch"

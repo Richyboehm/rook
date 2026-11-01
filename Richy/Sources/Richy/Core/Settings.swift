@@ -52,6 +52,15 @@ final class Settings: ObservableObject {
 
     @Published var windowFetcher: Bool = load("windowFetcher", true) { didSet { save("windowFetcher", windowFetcher) } }
 
+    // MARK: Mausrad (verändert Eingaben, deshalb erst nach bewusstem Einschalten)
+
+    @Published var mouseWheel: Bool = load("mouseWheel", false) { didSet { save("mouseWheel", mouseWheel) } }
+    @Published var mouseReverseScroll: Bool = load("mouseReverseScroll", true) { didSet { save("mouseReverseScroll", mouseReverseScroll) } }
+    @Published var mouseReverseZoom: Bool = load("mouseReverseZoom", true) { didSet { save("mouseReverseZoom", mouseReverseZoom) } }
+    @Published var mouseReverseHorizontal: Bool = load("mouseReverseHorizontal", true) {
+        didSet { save("mouseReverseHorizontal", mouseReverseHorizontal) }
+    }
+
     // MARK: Downloads (verschiebt Dateien, deshalb erst nach bewusstem Einschalten)
 
     @Published var downloadsCleaner: Bool = load("downloadsCleaner", false) { didSet { save("downloadsCleaner", downloadsCleaner) } }

@@ -7,6 +7,7 @@ Funktion einzeln ein und aus:
 - **StandBy**: große Uhr auf dem Sperrbildschirm, während der Mac lädt
 - **Notch Island**: Musik, Screenshots, Ablage, Termine, Timer und mehr an der Notch
 - **Fensterholer**: Cmd + Tab bringt immer ein Fenster nach vorne
+- **Mausrad**: kehrt Scrollen und Zoomen nur für die Maus um, das Trackpad bleibt unverändert
 - **Downloads-Aufräumer**: sortiert neue Downloads nach Dateityp
 
 Ausgeschaltete Funktionen laufen gar nicht. Alles andere reagiert auf Meldungen von macOS,

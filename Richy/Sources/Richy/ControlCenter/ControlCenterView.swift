@@ -51,6 +51,7 @@ struct ControlCenterView: View {
         case .feature(.standBy): standByPage
         case .feature(.notch): notchPage
         case .feature(.windowFetcher): windowFetcherPage
+        case .feature(.mouseWheel): mouseWheelPage
         case .feature(.downloads): downloadsPage
         case .permissions: permissionsPage
         case .general: generalPage
@@ -281,6 +282,32 @@ struct ControlCenterView: View {
             PageHeader(symbol: feature.symbol, title: feature.title,
                        text: "Cmd + Tab funktioniert wie gewohnt. Ist das Fenster der gewählten App minimiert, kommt es aus dem Dock zurück. Hat die App kein Fenster mehr, öffnet sie ein neues. Tasten werden weder verändert noch gespeichert.",
                        isOn: feature.isOn(settings))
+            Card(title: "Erlaubnisse") { PermissionRow(kind: .accessibility, permissions: permissions) }
+        }
+    }
+
+    // MARK: Mausrad
+
+    private var mouseWheelPage: some View {
+        let feature = Feature.mouseWheel
+        return VStack(alignment: .leading, spacing: 20) {
+            PageHeader(symbol: feature.symbol, title: feature.title,
+                       text: "Dreht die Richtung nur für Mäuse mit Rad um. Trackpad und Magic Mouse bleiben, wie unter Systemeinstellungen → Maus bzw. Trackpad bei „Natürliches Scrollen“ eingestellt.",
+                       isOn: feature.isOn(settings))
+            Card(title: "Optionen") {
+                OptionToggle(symbol: "arrow.up.arrow.down", title: "Scrollen umkehren",
+                             detail: "Das Rad ohne Sondertaste.",
+                             isOn: $settings.mouseReverseScroll)
+                Divider()
+                OptionToggle(symbol: "plus.magnifyingglass", title: "Zoomen umkehren",
+                             detail: "Das Rad mit gedrückter Cmd- oder ctrl-Taste, z. B. in Karten, Bildern oder beim Bildschirmzoom.",
+                             isOn: $settings.mouseReverseZoom)
+                Divider()
+                OptionToggle(symbol: "arrow.left.arrow.right", title: "Seitlich auch umkehren",
+                             detail: "Kipprad oder zweites Rad, z. B. bei Logitech-Mäusen.",
+                             isOn: $settings.mouseReverseHorizontal)
+            }
+            .disabled(!settings.mouseWheel)
             Card(title: "Erlaubnisse") { PermissionRow(kind: .accessibility, permissions: permissions) }
         }
     }

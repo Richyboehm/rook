@@ -15,6 +15,7 @@ final class AppState {
     let spotify = Spotify()
     let permissions = Permissions()
     let windowFetcher = WindowFetcher()
+    let mouseWheel = MouseWheel()
     let downloads = DownloadsCleaner()
     let weather = WeatherService()
 
@@ -56,6 +57,15 @@ final class AppState {
         // Fensterholer
         settings.$windowFetcher.sink { [weak self] on in
             if on { self?.windowFetcher.start() } else { self?.windowFetcher.stop() }
+        }.store(in: &cancellables)
+
+        // Mausrad
+        settings.$mouseReverseScroll.sink { [weak self] on in self?.mouseWheel.reverseScroll = on }.store(in: &cancellables)
+        settings.$mouseReverseZoom.sink { [weak self] on in self?.mouseWheel.reverseZoom = on }.store(in: &cancellables)
+        settings.$mouseReverseHorizontal.sink { [weak self] on in self?.mouseWheel.reverseHorizontal = on }
+            .store(in: &cancellables)
+        settings.$mouseWheel.sink { [weak self] on in
+            if on { self?.mouseWheel.start() } else { self?.mouseWheel.stop() }
         }.store(in: &cancellables)
 
         // Downloads
