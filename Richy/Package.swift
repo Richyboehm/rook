@@ -2,10 +2,10 @@
 import PackageDescription
 
 let package = Package(
-    name: "RBTools",
+    name: "Richy",
     platforms: [.macOS(.v26)],
     targets: [
-        .executableTarget(name: "RBTools", path: "Sources/RBTools")
+        .executableTarget(name: "Richy", path: "Sources/Richy")
     ],
     swiftLanguageModes: [.v5]
 )

@@ -82,7 +82,7 @@ struct IslandView: View {
         Divider()
         if settings.notchShelf && !model.shelf.isEmpty { Button("Ablage leeren") { model.clearShelf() } }
         Button("Kommandozentrale öffnen …") { NotificationCenter.default.post(name: .openControlCenter, object: nil) }
-        Button("RB-Tools beenden") { NSApp.terminate(nil) }
+        Button("Richy beenden") { NSApp.terminate(nil) }
     }
 
     @ViewBuilder private var content: some View {
@@ -580,5 +580,5 @@ struct IslandView: View {
 }
 
 extension Notification.Name {
-    static let openControlCenter = Notification.Name("RBTools.openControlCenter")
+    static let openControlCenter = Notification.Name("Richy.openControlCenter")
 }

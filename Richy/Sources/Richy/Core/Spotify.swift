@@ -32,7 +32,7 @@ final class Spotify: ObservableObject {
 
     nonisolated private static let bundleID = "com.spotify.client"
     nonisolated private static let separator = "\u{1F}"
-    nonisolated private static let queue = DispatchQueue(label: "RBTools.spotify")
+    nonisolated private static let queue = DispatchQueue(label: "Richy.spotify")
     /// Wird nur auf `queue` benutzt.
     nonisolated(unsafe) private static var stateScript: NSAppleScript?
 

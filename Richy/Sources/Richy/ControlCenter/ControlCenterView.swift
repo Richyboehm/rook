@@ -64,7 +64,7 @@ struct ControlCenterView: View {
             HStack(spacing: 14) {
                 Image(nsImage: NSApp.applicationIconImage).resizable().frame(width: 56, height: 56)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("RB-Tools").font(.system(size: 24, weight: .semibold))
+                    Text("Richy").font(.system(size: 24, weight: .semibold))
                     Text("Alle Funktionen auf einen Blick.").foregroundStyle(.secondary)
                 }
             }
@@ -340,10 +340,10 @@ struct ControlCenterView: View {
 
     private var generalPage: some View {
         VStack(alignment: .leading, spacing: 20) {
-            PageHeader(symbol: "gearshape", title: "Allgemein", text: "Einstellungen für RB-Tools selbst.")
+            PageHeader(symbol: "gearshape", title: "Allgemein", text: "Einstellungen für Richy selbst.")
             Card {
                 OptionToggle(symbol: "power", title: "Beim Anmelden starten",
-                             detail: "RB-Tools startet automatisch in der Menüleiste.",
+                             detail: "Richy startet automatisch in der Menüleiste.",
                              isOn: Binding(get: { settings.launchAtLogin }, set: { settings.launchAtLogin = $0 }))
                 Divider()
                 OptionToggle(symbol: "doc.text", title: "Protokoll schreiben",
@@ -358,7 +358,7 @@ struct ControlCenterView: View {
                 Text("Version \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "–")")
                     .foregroundStyle(.secondary)
                 Spacer()
-                Button("RB-Tools beenden") { NSApp.terminate(nil) }
+                Button("Richy beenden") { NSApp.terminate(nil) }
             }
         }
     }

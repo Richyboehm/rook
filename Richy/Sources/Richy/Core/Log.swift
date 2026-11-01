@@ -1,13 +1,13 @@
 import Foundation
 
-/// Schreibt Diagnosezeilen nach ~/Library/Logs/RBTools.log, aber nur, wenn das
+/// Schreibt Diagnosezeilen nach ~/Library/Logs/Richy.log, aber nur, wenn das
 /// Protokoll in der Kommandozentrale eingeschaltet ist (oder mit --debug gestartet).
 /// Die Datei wird auf etwa 200 KB begrenzt.
 enum Log {
     nonisolated(unsafe) static var enabled = CommandLine.arguments.contains("--debug")
 
     static let url = FileManager.default.homeDirectoryForCurrentUser
-        .appendingPathComponent("Library/Logs/RBTools.log")
+        .appendingPathComponent("Library/Logs/Richy.log")
 
     static func write(_ message: @autoclosure () -> String) {
         guard enabled else { return }

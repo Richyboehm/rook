@@ -4,7 +4,7 @@ import CoreBluetooth
 import CoreGraphics
 import EventKit
 
-/// Überblick über alle Erlaubnisse, die RB-Tools von macOS braucht, mit Knopf zum
+/// Überblick über alle Erlaubnisse, die Richy von macOS braucht, mit Knopf zum
 /// Anfragen. Geprüft wird nur, wenn die Kommandozentrale offen ist.
 @MainActor
 final class Permissions: NSObject, ObservableObject, CBCentralManagerDelegate {

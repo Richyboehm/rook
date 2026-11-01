@@ -156,7 +156,7 @@ final class StandByController {
         SkyLight.moveAboveLockScreen(panel)
         // Bildschirm wach halten, solange StandBy zu sehen ist (nur am Strom).
         IOPMAssertionCreateWithName(kIOPMAssertionTypePreventUserIdleDisplaySleep as CFString,
-                                    IOPMAssertionLevel(kIOPMAssertionLevelOn), "RB-Tools StandBy" as CFString, &assertion)
+                                    IOPMAssertionLevel(kIOPMAssertionLevelOn), "Richy StandBy" as CFString, &assertion)
         NSAnimationContext.runAnimationGroup { context in
             context.duration = 0.6
             panel.animator().alphaValue = 1

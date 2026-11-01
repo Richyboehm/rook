@@ -18,7 +18,7 @@ final class DownloadsCleaner: ObservableObject {
 
     private var source: DispatchSourceFileSystemObject?
     private var pending: DispatchWorkItem?
-    private let queue = DispatchQueue(label: "RBTools.downloads", qos: .utility)
+    private let queue = DispatchQueue(label: "Richy.downloads", qos: .utility)
 
     nonisolated static let downloads = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Downloads")
     /// Installer, die älter sind, kommen in den Papierkorb.
