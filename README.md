@@ -3,6 +3,22 @@
 Eigene kleine Mac-Apps, gebaut mit Swift und SwiftUI für macOS 26+.
 Alle laufen sparsam: Sie reagieren nur auf Ereignisse des Systems, statt regelmäßig abzufragen.
 
+## RB-Tools
+
+`RBTools` fasst alles in einer App zusammen, mit einer Kommandozentrale zum Ein- und Ausschalten
+jeder Funktion: Widgets auf dem Sperrbildschirm (Musik, Termin, Wetter, Akku & AirPods), StandBy,
+Notch Island, Fensterholer und Downloads-Aufräumer.
+
+```bash
+cd RBTools
+./build.sh install   # bauen, nach /Applications installieren und starten
+./build.sh zip       # ZIP zum Weitergeben
+```
+
+Das Wetter kommt von [Open-Meteo](https://open-meteo.com); gesendet wird nur der eingetragene Ort.
+
+## Einzelne Apps (Vorgänger, durch RB-Tools ersetzt)
+
 | Ordner | Was es macht | Bauen & installieren |
 |---|---|---|
 | `LockGlass` | Musik-Widget (Spotify) im Glas-Look auf dem Sperrbildschirm, dazu StandBy-Modus am Strom: große Uhr, Song, nächster Termin, Ladestand, nachts rot | `./build.sh install` |
