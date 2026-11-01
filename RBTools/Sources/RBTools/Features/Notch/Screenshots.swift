@@ -10,7 +10,7 @@ enum Screenshots {
 
     static let folder: URL = {
         let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
-        return caches.appendingPathComponent("NotchIsland/Screenshots", isDirectory: true)
+        return caches.appendingPathComponent("RBTools/Screenshots", isDirectory: true)
     }()
 
     static func capture(_ mode: Mode, completion: @escaping @MainActor (URL) -> Void) {
