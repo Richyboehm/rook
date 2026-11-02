@@ -1,14 +1,73 @@
-// Zeichnet das App-Icon (1024 × 1024): weißes Icon, darauf ein schwarz umrandeter
-// Block mit versetzter Kante und „ry“.
-// Aufruf: swift Scripts/make-icon.swift Ziel.png
+// Zeichnet aus dem Rook-Raben (Scripts/raven.png, schwarze Linien auf transparent) die Icons von Richy:
+//   AppIcon.png                   1024 × 1024, weißer Rabe auf schwarzem Icon (Rook ist umgekehrt)
+//   MenuBarIcon.png / @2x.png     18 pt, der Rabenkopf als gefüllte Silhouette
+// Aufruf:
+//   swift Scripts/make-icon.swift Scripts/raven.png Resources
+//   mkdir AppIcon.iconset; für 16 32 128 256 512 je icon_NxN.png und @2x mit sips aus AppIcon.png,
+//   dann iconutil -c icns AppIcon.iconset -o Resources/AppIcon.icns
 import AppKit
 
-let size: CGFloat = 1024
-let ink = NSColor(white: 0.06, alpha: 1)
-let image = NSImage(size: NSSize(width: size, height: size))
-image.lockFocus()
+let source = NSBitmapImageRep(data: try! Data(contentsOf: URL(fileURLWithPath: CommandLine.arguments[1])))!
+let out = CommandLine.arguments[2]
+let n = source.pixelsWide
+func lineAlpha(_ p: Int) -> UInt8 { source.bitmapData![p * 4 + 3] }
 
-// macOS-Icons lassen rundherum Rand; der Körper ist 824 groß mit runden Ecken.
+func mask(_ value: (Int) -> UInt8) -> NSImage {
+    let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: n, pixelsHigh: n, bitsPerSample: 8, samplesPerPixel: 4,
+                               hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: n * 4, bitsPerPixel: 32)!
+    for p in 0..<(n * n) {
+        rep.bitmapData![p * 4] = 0; rep.bitmapData![p * 4 + 1] = 0; rep.bitmapData![p * 4 + 2] = 0
+        rep.bitmapData![p * 4 + 3] = value(p)
+    }
+    let image = NSImage(size: NSSize(width: n, height: n))
+    image.addRepresentation(rep)
+    return image
+}
+func tinted(_ image: NSImage, _ color: NSColor, in rect: NSRect) {
+    let copy = NSImage(size: rect.size)
+    copy.lockFocus()
+    NSGraphicsContext.current?.imageInterpolation = .high
+    image.draw(in: NSRect(origin: .zero, size: rect.size))
+    color.set()
+    NSRect(origin: .zero, size: rect.size).fill(using: .sourceIn)
+    copy.unlockFocus()
+    copy.draw(in: rect)
+}
+func save(_ image: NSImage, pixels: Int, _ name: String) {
+    let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: pixels, pixelsHigh: pixels, bitsPerSample: 8, samplesPerPixel: 4,
+                               hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0)!
+    rep.size = image.size
+    NSGraphicsContext.saveGraphicsState()
+    NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
+    NSGraphicsContext.current?.imageInterpolation = .high
+    image.draw(in: NSRect(origin: .zero, size: image.size))
+    NSGraphicsContext.restoreGraphicsState()
+    try! rep.representation(using: .png, properties: [:])!.write(to: URL(fileURLWithPath: "\(out)/\(name)"))
+}
+
+// Menüleiste: Außenbereich per Flutfüllung vom Rand; was übrig bleibt, ist der gefüllte Kopf.
+var outside = [Bool](repeating: false, count: n * n)
+var stack = [Int]()
+for i in 0..<n { stack += [i, (n - 1) * n + i, i * n, i * n + n - 1] }
+while let p = stack.popLast() {
+    if outside[p] || lineAlpha(p) > 110 { continue }
+    outside[p] = true
+    let x = p % n, y = p / n
+    if x > 0 { stack.append(p - 1) }; if x < n - 1 { stack.append(p + 1) }
+    if y > 0 { stack.append(p - n) }; if y < n - 1 { stack.append(p + n) }
+}
+let menuBar = mask { outside[$0] ? 0 : 255 }
+let menuImage = NSImage(size: NSSize(width: 18, height: 18))
+menuImage.lockFocus()
+menuBar.draw(in: NSRect(x: 0, y: 0, width: 18, height: 18))
+menuImage.unlockFocus()
+save(menuImage, pixels: 18, "MenuBarIcon.png")
+save(menuImage, pixels: 36, "MenuBarIcon@2x.png")
+
+// App-Icon: macOS-Icons lassen rundherum Rand; der Körper ist 824 groß mit runden Ecken.
+let size: CGFloat = 1024
+let icon = NSImage(size: NSSize(width: size, height: size))
+icon.lockFocus()
 let body = NSRect(x: 100, y: 100, width: 824, height: 824)
 NSGraphicsContext.saveGraphicsState()
 let shadow = NSShadow()
@@ -16,35 +75,9 @@ shadow.shadowColor = NSColor.black.withAlphaComponent(0.22)
 shadow.shadowBlurRadius = 22
 shadow.shadowOffset = NSSize(width: 0, height: -8)
 shadow.set()
-NSColor.white.setFill()
+NSColor(white: 0.07, alpha: 1).setFill()
 NSBezierPath(roundedRect: body, xRadius: 185, yRadius: 185).fill()
 NSGraphicsContext.restoreGraphicsState()
-
-// Block in einem 100er-Raster innerhalb des Körpers
-let u = body.width * 0.72 / 100
-let o = NSPoint(x: body.minX + body.width * 0.14, y: body.minY + body.width * 0.14)
-func rect(_ x: CGFloat, _ y: CGFloat, _ w: CGFloat, _ h: CGFloat) -> NSRect {
-    NSRect(x: o.x + x * u, y: o.y + y * u, width: w * u, height: h * u)
-}
-
-ink.setFill()
-NSBezierPath(roundedRect: rect(24, 16, 60, 60), xRadius: 12 * u, yRadius: 12 * u).fill()
-let front = NSBezierPath(roundedRect: rect(16, 24, 60, 60), xRadius: 12 * u, yRadius: 12 * u)
-NSColor.white.setFill()
-front.fill()
-front.lineWidth = 6 * u
-ink.setStroke()
-front.stroke()
-
-let text = NSAttributedString(string: "ry", attributes: [
-    .font: NSFont.systemFont(ofSize: 34 * u, weight: .heavy),
-    .foregroundColor: ink,
-    .kern: -1 * u,
-])
-let textSize = text.size()
-// Das „y“ hat eine Unterlänge; etwas anheben, damit es optisch mittig sitzt.
-text.draw(at: NSPoint(x: o.x + 46 * u - textSize.width / 2, y: o.y + 54 * u - textSize.height / 2 + 5 * u))
-
-image.unlockFocus()
-let rep = NSBitmapImageRep(data: image.tiffRepresentation!)!
-try! rep.representation(using: .png, properties: [:])!.write(to: URL(fileURLWithPath: CommandLine.arguments[1]))
+tinted(mask(lineAlpha), .white, in: body.insetBy(dx: body.width * 0.17, dy: body.width * 0.17))
+icon.unlockFocus()
+save(icon, pixels: 1024, "AppIcon.png")

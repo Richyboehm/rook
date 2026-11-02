@@ -42,6 +42,9 @@ struct ControlCenterView: View {
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             permissions.refresh()
         }
+        .onReceive(NotificationCenter.default.publisher(for: .showControlCenterPage)) { note in
+            if let raw = note.object as? String, let feature = Feature(rawValue: raw) { page = .feature(feature) }
+        }
     }
 
     @ViewBuilder private var detail: some View {

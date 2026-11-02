@@ -581,4 +581,6 @@ struct IslandView: View {
 
 extension Notification.Name {
     static let openControlCenter = Notification.Name("Richy.openControlCenter")
+    /// `object` ist der rawValue einer `Feature`, deren Seite die Kommandozentrale zeigen soll.
+    static let showControlCenterPage = Notification.Name("Richy.showControlCenterPage")
 }
