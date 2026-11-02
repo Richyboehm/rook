@@ -14,7 +14,7 @@ Funktion einzeln ein und aus:
 Ein Klick auf den Raben in der Menüleiste öffnet ein kleines Fenster mit allen Funktionen
 (per Ziehen umsortierbar) und einer Leistungsanzeige mit CPU und Arbeitsspeicher von Rook.
 Von dort und aus der Kommandozentrale lässt sich auch der Browser
-[Rook Search](https://github.com/richyboehm/rook) laden und installieren.
+[Rook Search](../README.md) laden und installieren.
 
 Rook hieß früher Richy. Die interne Kennung `de.richyboehm.richy` ist geblieben, damit
 Einstellungen und Erlaubnisse beim Umbenennen erhalten bleiben.
@@ -23,7 +23,7 @@ Ausgeschaltete Funktionen laufen gar nicht. Alles andere reagiert auf Meldungen 
 statt regelmäßig nachzusehen. Gemessen mit laufender Musik: etwa 0,2 % CPU und 25 MB.
 
 ```bash
-cd Rook
+cd app
 ./build.sh install   # bauen, nach /Applications installieren und starten
 ./build.sh zip       # ZIP zum Weitergeben
 ```

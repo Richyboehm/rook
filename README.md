@@ -17,6 +17,10 @@
   <a href="https://richyboehm.github.io/rook/download/"><b>Download Rook Search for Mac</b></a>
 </p>
 
+> **Also in this repository:** [Rook](app/README.md), a menu bar app for macOS 26+ with lock screen
+> widgets, StandBy, a Dynamic Island for the notch, per-app volume and more. It can install Rook
+> Search for you. The source lives in [`app/`](app/), the browser in [`browser/`](browser/).
+
 ## Why Rook Search?
 
 Most new tab pages are either plain or full of news, ads and tracking. Rook Search gives you a polished, Apple-style start page while your browser keeps doing what it does best: security, passwords, sync and updates.
