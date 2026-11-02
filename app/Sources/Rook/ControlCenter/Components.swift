@@ -3,7 +3,7 @@ import SwiftUI
 /// Die Funktionen mit Symbol, Farben und Beschreibung, wie sie in der
 /// Kommandozentrale und im Menü erscheinen.
 enum Feature: String, CaseIterable, Identifiable {
-    case lockWidget, standBy, notch, windowFetcher, mouseWheel, appVolume, downloads
+    case lockWidget, standBy, notch, windowFetcher, dockToggle, mouseWheel, appVolume, downloads
     var id: String { rawValue }
 
     var title: String {
@@ -12,6 +12,7 @@ enum Feature: String, CaseIterable, Identifiable {
         case .standBy: "StandBy"
         case .notch: "Notch Island"
         case .windowFetcher: "Fensterholer"
+        case .dockToggle: "Dock wie Windows"
         case .mouseWheel: "Mausrad"
         case .appVolume: "Lautstärke"
         case .downloads: "Downloads-Aufräumer"
@@ -24,6 +25,7 @@ enum Feature: String, CaseIterable, Identifiable {
         case .standBy: "Große Uhr auf dem Sperrbildschirm, während der Mac lädt."
         case .notch: "Musik, Screenshots, Ablage und mehr an der Notch."
         case .windowFetcher: "Cmd + Tab bringt immer ein Fenster nach vorne."
+        case .dockToggle: "Nochmal aufs Dock-Symbol klicken minimiert die App ins Dock."
         case .mouseWheel: "Scrollen und Zoomen mit der Maus umkehren."
         case .appVolume: "Eigene Lautstärke für jede App."
         case .downloads: "Sortiert neue Downloads nach Dateityp."
@@ -36,6 +38,7 @@ enum Feature: String, CaseIterable, Identifiable {
         case .standBy: "clock"
         case .notch: "capsule.tophalf.filled"
         case .windowFetcher: "macwindow.on.rectangle"
+        case .dockToggle: "dock.rectangle"
         case .mouseWheel: "computermouse"
         case .appVolume: "speaker.wave.2"
         case .downloads: "tray.and.arrow.down"
@@ -45,7 +48,7 @@ enum Feature: String, CaseIterable, Identifiable {
     /// Ohne diese Erlaubnis funktioniert die Funktion gar nicht.
     var requiredPermission: Permissions.Kind? {
         switch self {
-        case .windowFetcher, .mouseWheel: .accessibility
+        case .windowFetcher, .dockToggle, .mouseWheel: .accessibility
         case .downloads: .downloads
         case .appVolume: .audioCapture
         default: nil
@@ -58,6 +61,7 @@ enum Feature: String, CaseIterable, Identifiable {
         case .standBy: Binding(get: { settings.standBy }, set: { settings.standBy = $0 })
         case .notch: Binding(get: { settings.notch }, set: { settings.notch = $0 })
         case .windowFetcher: Binding(get: { settings.windowFetcher }, set: { settings.windowFetcher = $0 })
+        case .dockToggle: Binding(get: { settings.dockToggle }, set: { settings.dockToggle = $0 })
         case .mouseWheel: Binding(get: { settings.mouseWheel }, set: { settings.mouseWheel = $0 })
         case .appVolume: Binding(get: { settings.appVolume }, set: { settings.appVolume = $0 })
         case .downloads: Binding(get: { settings.downloadsCleaner }, set: { settings.downloadsCleaner = $0 })

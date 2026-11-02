@@ -15,6 +15,7 @@ final class AppState {
     let spotify = Spotify()
     let permissions = Permissions()
     let windowFetcher = WindowFetcher()
+    let dockToggle = DockToggle()
     let mouseWheel = MouseWheel()
     let volume = AppVolume()
     let resources = ResourceMonitor()
@@ -26,11 +27,12 @@ final class AppState {
                                                   calendar: calendar, weather: weather)
     private(set) lazy var standBy = StandByController(spotify: spotify)
     private(set) lazy var notch = NotchFeature(spotify: spotify, system: system, power: power,
-                                               calendar: calendar, settings: settings)
+                                               calendar: calendar, settings: settings, volume: volume)
 
     private var cancellables = Set<AnyCancellable>()
 
     func start() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 30) { ResourceMonitor.recordBaseline() }
         settings.$debugLog
             .sink { on in Log.enabled = on || CommandLine.arguments.contains("--debug") }
             .store(in: &cancellables)
@@ -58,6 +60,9 @@ final class AppState {
         settings.$notch.sink { [weak self] on in self?.notch.enabled = on }.store(in: &cancellables)
 
         // Fensterholer
+        settings.$dockToggle.sink { [weak self] on in
+            if on { self?.dockToggle.start() } else { self?.dockToggle.stop() }
+        }.store(in: &cancellables)
         settings.$windowFetcher.sink { [weak self] on in
             if on { self?.windowFetcher.start() } else { self?.windowFetcher.stop() }
         }.store(in: &cancellables)

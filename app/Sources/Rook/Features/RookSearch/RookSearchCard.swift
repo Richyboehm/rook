@@ -23,7 +23,10 @@ struct RookSearchCard: View {
                 buttons
             }
         }
-        .onAppear { installer.refresh() }
+        .onAppear {
+            installer.refresh()
+            installer.checkForUpdate()
+        }
     }
 
     @ViewBuilder private var status: some View {
@@ -37,7 +40,15 @@ struct RookSearchCard: View {
         case .failed(let problem):
             Label(problem, systemImage: "exclamationmark.triangle.fill").font(.callout).foregroundStyle(.orange)
         case .idle:
-            if installer.installedURL != nil {
+            if let installed = installer.installedVersion {
+                if installer.updateAvailable, let latest = installer.latestVersion {
+                    StatusChip(text: "Neu: Version \(latest.version)", color: .orange)
+                } else if installer.latestVersion != nil {
+                    StatusChip(text: "Aktuell · Version \(installed.version)", color: .green)
+                } else {
+                    StatusChip(text: "Installiert · Version \(installed.version)", color: .green)
+                }
+            } else if installer.installedURL != nil {
                 StatusChip(text: "Installiert", color: .green)
             } else {
                 StatusChip(text: "Nicht installiert", color: .secondary)
@@ -50,7 +61,10 @@ struct RookSearchCard: View {
             Button("Download-Seite öffnen") { NSWorkspace.shared.open(RookSearchInstaller.website) }
             Button("Nochmal versuchen") { installer.install() }
         } else if installer.installedURL != nil {
-            Button("Aktualisieren") { installer.install() }.disabled(installer.isBusy)
+            // Nur anbieten, wenn auf der Download-Seite wirklich eine neuere Version liegt.
+            if installer.updateAvailable {
+                Button("Aktualisieren") { installer.install() }.disabled(installer.isBusy)
+            }
             Button("Öffnen") { installer.open() }.buttonStyle(.borderedProminent).disabled(installer.isBusy)
         } else {
             Button("Laden & installieren") { installer.install() }

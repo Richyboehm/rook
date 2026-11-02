@@ -15,6 +15,14 @@ final class NotchFeature {
 
     private let spotify: Spotify
     private let settings: Settings
+    private let volume: AppVolume
+    /// Fängt das Wischen mit zwei Fingern ab, nur solange die Notch aufgeklappt ist.
+    private var scrollMonitor: Any?
+    private var swipeAxis = Axis?.none
+    /// App, die vor dem Tippen in der Schnellnotiz den Fokus hatte.
+    private var previousApp: NSRunningApplication?
+    /// Letzte Fingerbewegung, für den Schwung beim Loslassen.
+    private var lastSwipeDelta: CGFloat = 0
     private var panel: IslandPanel!
     private var container: IslandContainer!
     private var headphones: HeadphoneMonitor?
@@ -28,9 +36,11 @@ final class NotchFeature {
     var needsArtwork: Bool { enabled && settings.notchMusic }
     var needsCalendar: Bool { enabled && settings.notchCalendar }
 
-    init(spotify: Spotify, system: SystemState, power: PowerMonitor, calendar: CalendarWatcher, settings: Settings) {
+    init(spotify: Spotify, system: SystemState, power: PowerMonitor, calendar: CalendarWatcher, settings: Settings,
+         volume: AppVolume) {
         self.spotify = spotify
         self.settings = settings
+        self.volume = volume
         makePanel()
 
         NotificationCenter.default.addObserver(forName: NSApplication.didChangeScreenParametersNotification,
@@ -91,6 +101,70 @@ final class NotchFeature {
             .receive(on: RunLoop.main)
             .sink { [weak self] _ in self?.updateHotZone() }
             .store(in: &cancellables)
+        model.$hovering.removeDuplicates()
+            .sink { [weak self] hovering in self?.hoverChanged(hovering) }
+            .store(in: &cancellables)
+        model.$page.removeDuplicates()
+            .sink { [weak self] page in self?.allowKeyboard(page == .note) }
+            .store(in: &cancellables)
+    }
+
+    // MARK: Seiten
+
+    /// Aufgeklappt: auf Wischen achten. Weggegangen: zurück auf die normale Seite.
+    private func hoverChanged(_ hovering: Bool) {
+        if hovering, scrollMonitor == nil {
+            scrollMonitor = NSEvent.addLocalMonitorForEvents(matching: .scrollWheel) { [weak self] event in
+                // Lokale Monitore laufen ohnehin auf dem Hauptthread.
+                nonisolated(unsafe) let event = event
+                let consumed = MainActor.assumeIsolated { self?.handleSwipe(event) == true }
+                return consumed ? nil : event
+            }
+        } else if !hovering {
+            if let scrollMonitor { NSEvent.removeMonitor(scrollMonitor) }
+            scrollMonitor = nil
+            model.resetPage()
+        }
+    }
+
+    /// Zwei Finger waagrecht drehen das Seiten-Rad live mit; beim Loslassen rastet es ein.
+    /// Senkrechtes Scrollen (z. B. die Timer-Räder) geht unverändert durch.
+    private func handleSwipe(_ event: NSEvent) -> Bool {
+        guard event.window === panel, event.hasPreciseScrollingDeltas, model.peek == nil else { return false }
+        if event.phase == .began || event.phase == .mayBegin {
+            swipeAxis = nil
+            lastSwipeDelta = 0
+        }
+        // Nachlauf nach dem Loslassen: gehört zur letzten Bewegung, das Einrasten übernimmt die Animation.
+        if event.phase.isEmpty && !event.momentumPhase.isEmpty { return swipeAxis == .horizontal }
+        let dx = event.scrollingDeltaX, dy = event.scrollingDeltaY
+        if swipeAxis == nil, abs(dx) + abs(dy) > 1.5 { swipeAxis = abs(dx) > abs(dy) ? .horizontal : .vertical }
+        guard swipeAxis == .horizontal else { return false }
+        // Richtung der Finger, egal ob „Natürliches Scrollen“ an ist (negativ = nach links).
+        let finger = event.isDirectionInvertedFromDevice ? dx : -dx
+        if finger != 0 {
+            model.swipe(by: finger)
+            lastSwipeDelta = finger
+        }
+        if event.phase == .ended || event.phase == .cancelled {
+            model.endSwipe(flick: lastSwipeDelta)
+            swipeAxis = nil
+        }
+        return true
+    }
+
+    /// Tippen geht nur auf der Schnellnotiz; danach bekommt die App, in der man vorher war,
+    /// den Fokus direkt zurück. Das Fenster der Notch bleibt dabei sichtbar.
+    private func allowKeyboard(_ on: Bool) {
+        panel.allowsKeyboard = on
+        if on {
+            previousApp = NSWorkspace.shared.frontmostApplication
+            panel.makeKey()
+        } else if panel.isKeyWindow {
+            panel.makeFirstResponder(nil)
+            previousApp?.activate()
+            previousApp = nil
+        }
     }
 
     private static func notchScreen() -> NSScreen? {
@@ -131,7 +205,7 @@ final class NotchFeature {
         panel.hidesOnDeactivate = false
 
         container = IslandContainer(frame: NSRect(origin: .zero, size: windowSize))
-        let hosting = NSHostingView(rootView: IslandView(spotify: spotify, model: model, settings: settings))
+        let hosting = NSHostingView(rootView: IslandView(spotify: spotify, model: model, settings: settings, volume: volume))
         hosting.frame = container.bounds
         hosting.autoresizingMask = [.width, .height]
         container.addSubview(hosting)
@@ -172,6 +246,7 @@ final class NotchFeature {
     /// Nur einblenden, wenn die Notch an ist und der jeweilige Bereich eingeschaltet.
     private func peek(_ kind: IslandModel.Peek) {
         guard enabled, !model.hovering, !model.dragging, isAllowed(kind) else { return }
+        if model.page != .main { model.resetPage() }
         model.peek = kind
         peekWork?.cancel()
         let work = DispatchWorkItem { [weak self] in

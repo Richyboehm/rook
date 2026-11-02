@@ -54,6 +54,7 @@ struct ControlCenterView: View {
         case .feature(.standBy): standByPage
         case .feature(.notch): notchPage
         case .feature(.windowFetcher): windowFetcherPage
+        case .feature(.dockToggle): dockTogglePage
         case .feature(.mouseWheel): mouseWheelPage
         case .feature(.appVolume): appVolumePage
         case .feature(.downloads): downloadsPage
@@ -281,6 +282,16 @@ struct ControlCenterView: View {
     }
 
     // MARK: Fensterholer
+
+    private var dockTogglePage: some View {
+        let feature = Feature.dockToggle
+        return VStack(alignment: .leading, spacing: 20) {
+            PageHeader(symbol: feature.symbol, title: feature.title,
+                       text: "Klickst du im Dock auf die App, die gerade vorne ist, fliegen ihre Fenster ins Dock, wie in der Windows-Taskleiste. Ein weiterer Klick holt alle Fenster zurück. Hat die App kein offenes Fenster, öffnet der Klick wie gewohnt ein neues. Rook achtet dafür nur auf Klicks, nicht auf Mausbewegungen.",
+                       isOn: feature.isOn(settings))
+            Card(title: "Erlaubnisse") { PermissionRow(kind: .accessibility, permissions: permissions) }
+        }
+    }
 
     private var windowFetcherPage: some View {
         let feature = Feature.windowFetcher

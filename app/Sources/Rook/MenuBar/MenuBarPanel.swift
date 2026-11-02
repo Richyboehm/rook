@@ -1,62 +1,134 @@
 import AppKit
 import SwiftUI
-import UniformTypeIdentifiers
 
-/// Das Fenster unter dem Raben in der Menüleiste, als normales macOS-Popover mit kleinem Pfeil.
+/// Das Fenster unter dem Raben in der Menüleiste. Ein eigenes, dunkles Fenster mit der
+/// klassischen Unschärfe statt des Glas-Popovers von macOS 26: Dessen Glas belegt beim Öffnen
+/// und bei jeder Größenänderung kurz rund 70 MB Grafikspeicher. Die Unschärfe hier zeichnet
+/// das System selbst, Rook kostet sie nichts.
 /// Schließt sich bei Klick daneben, mit Esc oder bei erneutem Klick auf den Raben.
 @MainActor
-final class MenuBarPanel: NSObject, NSPopoverDelegate {
+final class MenuBarPanel: NSObject {
     var onClose: (() -> Void)?
-    private let popover = NSPopover()
     private let intro = IntroTrigger()
     private let state: AppState
     private let openSettings: (Feature?) -> Void
+    /// Wird bei jedem Öffnen neu gebaut und beim Schließen freigegeben.
+    private var window: MenuBarWindow?
+    private var outsideClicks: Any?
+    private var closedAt = Date.distantPast
 
     init(state: AppState, openSettings: @escaping (Feature?) -> Void) {
         self.state = state
         self.openSettings = openSettings
         super.init()
-        // Immer dunkel wie bei Vorssaint, egal ob die Menüleiste hell oder dunkel ist.
-        popover.appearance = NSAppearance(named: .darkAqua)
-        popover.behavior = .transient
-        popover.animates = true
-        popover.delegate = self
     }
 
-    private var closedAt = Date.distantPast
-
-    /// Offen oder gerade eben geschlossen: Ein Klick auf den Raben schließt das Popover zuerst
-    /// selbst (es ist „transient“), danach soll derselbe Klick es nicht gleich wieder öffnen.
-    var isVisible: Bool { popover.isShown || Date().timeIntervalSince(closedAt) < 0.3 }
+    /// Offen oder gerade eben geschlossen: Der Klick auf den Raben, der das Fenster (als Klick
+    /// daneben) schon geschlossen hat, soll es nicht gleich wieder öffnen.
+    var isVisible: Bool { window?.isVisible == true || Date().timeIntervalSince(closedAt) < 0.3 }
 
     func show(below button: NSStatusBarButton) {
+        guard window == nil, let buttonWindow = button.window,
+              let screen = buttonWindow.screen ?? NSScreen.main else { return }
         intro.count += 1
-        // Der Inhalt wird erst beim Öffnen gebaut und beim Schließen wieder freigegeben.
-        if popover.contentViewController == nil { popover.contentViewController = makeContent() }
-        popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
-        // Als Hintergrund-App bekommt das Popover sonst keine Tastatur (Esc).
-        popover.contentViewController?.view.window?.makeKey()
+        state.resources.windowOpened()
+        let anchor = buttonWindow.convertToScreen(button.convert(button.bounds, to: nil))
+        let window = MenuBarWindow(content: makeView())
+        window.onCancel = { [weak self] in self?.close() }
+        window.onResign = { [weak self] in self?.close() }
+        window.place(below: anchor, on: screen)
+        window.makeKeyAndOrderFront(nil)
+        self.window = window
+        outsideClicks = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
+            MainActor.assumeIsolated { self?.close() }
+        }
     }
 
-    func close() { popover.performClose(nil) }
-
-    func popoverWillClose(_ notification: Notification) { closedAt = Date() }
-
-    func popoverDidClose(_ notification: Notification) {
-        popover.contentViewController = nil
+    func close() {
+        guard let window else { return }
+        self.window = nil
+        if let outsideClicks { NSEvent.removeMonitor(outsideClicks) }
+        outsideClicks = nil
+        window.onResign = nil
+        window.orderOut(nil)
+        window.contentView = nil
+        closedAt = Date()
+        ResourceMonitor.windowClosed()
         Memory.relieve()
         onClose?()
     }
 
-    private func makeContent() -> NSViewController {
-        let view = MenuBarView(settings: state.settings, permissions: state.permissions, downloads: state.downloads,
-                               intro: intro, state: state,
-                               openSettings: { [weak self] feature in self?.close(); self?.openSettings(feature) },
-                               close: { [weak self] in self?.close() })
-        let controller = NSHostingController(rootView: view)
-        // Das Popover wächst und schrumpft mit dem Inhalt, z. B. beim Wechsel der Funktion.
-        controller.sizingOptions = .preferredContentSize
-        return controller
+    private func makeView() -> some View {
+        MenuBarView(settings: state.settings, permissions: state.permissions, downloads: state.downloads,
+                    intro: intro, state: state,
+                    openSettings: { [weak self] feature in self?.close(); self?.openSettings(feature) },
+                    close: { [weak self] in self?.close() })
+    }
+}
+
+/// Rahmenloses, dunkles Fenster mit runden Ecken und Schatten. Es wächst und schrumpft mit
+/// dem Inhalt (z. B. beim Wechsel der Funktion), die Oberkante bleibt unter der Menüleiste.
+final class MenuBarWindow: NSPanel {
+    var onCancel: (() -> Void)?
+    var onResign: (() -> Void)?
+
+    init<Content: View>(content: Content) {
+        super.init(contentRect: .zero, styleMask: [.borderless, .nonactivatingPanel, .fullSizeContentView],
+                   backing: .buffered, defer: false)
+        isFloatingPanel = true
+        level = .popUpMenu
+        backgroundColor = .clear
+        isOpaque = false
+        hasShadow = true
+        hidesOnDeactivate = false
+        isReleasedWhenClosed = false
+        appearance = NSAppearance(named: .darkAqua)
+        collectionBehavior = [.moveToActiveSpace, .fullScreenAuxiliary]
+
+        let blur = NSVisualEffectView()
+        blur.material = .popover
+        blur.blendingMode = .behindWindow
+        blur.state = .active
+        blur.wantsLayer = true
+        blur.layer?.cornerRadius = 20
+        blur.layer?.cornerCurve = .continuous
+        blur.layer?.masksToBounds = true
+        let host = NSHostingView(rootView: content.onGeometryChange(for: CGSize.self, of: { $0.size }) { [weak self] size in
+            self?.fit(size)
+        })
+        host.translatesAutoresizingMaskIntoConstraints = false
+        blur.addSubview(host)
+        NSLayoutConstraint.activate([
+            host.leadingAnchor.constraint(equalTo: blur.leadingAnchor),
+            host.trailingAnchor.constraint(equalTo: blur.trailingAnchor),
+            host.topAnchor.constraint(equalTo: blur.topAnchor),
+            host.bottomAnchor.constraint(equalTo: blur.bottomAnchor),
+        ])
+        contentView = blur
+        setContentSize(host.fittingSize)
+    }
+
+    override var canBecomeKey: Bool { true }
+
+    override func cancelOperation(_ sender: Any?) { onCancel?() }
+
+    override func resignKey() {
+        super.resignKey()
+        onResign?()
+    }
+
+    /// Mittig unter dem Raben, aber immer ganz auf dem Bildschirm.
+    func place(below anchor: NSRect, on screen: NSScreen) {
+        let size = frame.size
+        let visible = screen.visibleFrame
+        let x = min(max(anchor.midX - size.width / 2, visible.minX + 8), visible.maxX - size.width - 8)
+        setFrameOrigin(NSPoint(x: x, y: anchor.minY - 6 - size.height))
+    }
+
+    private func fit(_ size: CGSize) {
+        guard size.width > 0, size.height > 0, abs(size.height - frame.height) > 0.5 || abs(size.width - frame.width) > 0.5 else { return }
+        setFrame(NSRect(x: frame.minX, y: frame.maxY - size.height, width: size.width, height: size.height), display: true)
+        invalidateShadow()
     }
 }
 
@@ -84,7 +156,11 @@ struct MenuBarView: View {
     @AppStorage("menuBarTab") private var selectedRaw = Feature.lockWidget.rawValue
     /// Reihenfolge der Leiste, per Ziehen änderbar; neue Tabs kommen hinten dazu.
     @AppStorage("menuBarOrder") private var orderRaw = ""
-    @State private var dragging: MenuTab?
+    /// Laufendes Umsortieren: welcher Tab gezogen wird und wie weit.
+    @State private var drag: TabDrag?
+    /// Nach dem Loslassen: Rest-Abstand des Tabs zu seinem neuen Platz, gleitet auf 0.
+    @State private var settling: (tab: MenuTab, offset: CGFloat)?
+    @State private var barWidth: CGFloat = 0
     /// Die Vorschau der Widgets meldet keine Änderungen; nach dem Umschalten neu zeichnen.
     @State private var widgetPreview = false
     @State private var notchExtras = false
@@ -130,34 +206,82 @@ struct MenuBarView: View {
         }
     }
 
-    /// Klick wählt einen Tab, Ziehen sortiert die Leiste um.
+    private static let tabSpacing: CGFloat = 2
+
+    /// Klick wählt einen Tab. Ziehen sortiert um wie auf dem iPhone-Homescreen: Während des
+    /// Ziehens bleibt die Leiste selbst stehen, nur der gezogene Tab folgt dem Zeiger 1:1 und
+    /// die anderen rutschen zur Seite. Erst beim Loslassen wird die Reihenfolge gespeichert.
     private var tabBar: some View {
-        HStack(spacing: 2) {
-            ForEach(tabs) { tab in
+        HStack(spacing: Self.tabSpacing) {
+            ForEach(Array(tabs.enumerated()), id: \.element) { index, tab in
                 let isSelected = tab == selected
-                Button { selectedRaw = tab.id } label: {
-                    Image(systemName: tab.symbol)
-                        .font(.system(size: 13.5, weight: .semibold))
-                        .foregroundStyle(isSelected ? AnyShapeStyle(MenuBarView.accent) : AnyShapeStyle(.secondary))
-                        .frame(maxWidth: .infinity, minHeight: 27)
-                        .background(isSelected ? MenuBarView.accent.opacity(0.2) : .clear,
-                                    in: RoundedRectangle(cornerRadius: 8, style: .continuous))
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .help(tab.title)
-                .accessibilityLabel(tab.title)
-                .onDrag {
-                    dragging = tab
-                    return NSItemProvider(object: tab.id as NSString)
-                }
-                .onDrop(of: [.text], delegate: TabDrop(target: tab, tabs: tabs, dragging: $dragging) { order in
-                    orderRaw = order.map(\.id).joined(separator: ",")
-                })
+                let isDragged = drag?.tab == tab
+                Image(systemName: tab.symbol)
+                    .font(.system(size: 13.5, weight: .semibold))
+                    .foregroundStyle(isSelected ? AnyShapeStyle(MenuBarView.accent) : AnyShapeStyle(.secondary))
+                    .frame(maxWidth: .infinity, minHeight: 27)
+                    .background(isSelected ? MenuBarView.accent.opacity(0.2) : isDragged ? .primary.opacity(0.12) : .clear,
+                                in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                    .contentShape(Rectangle())
+                    .scaleEffect(isDragged ? 1.12 : 1)
+                    .shadow(color: .black.opacity(isDragged ? 0.4 : 0), radius: 6, y: 2)
+                    .animation(.easeOut(duration: 0.15), value: isDragged)
+                    // Der gezogene Tab ohne Verzögerung, die anderen weich.
+                    .offset(x: offset(for: tab, at: index))
+                    .animation(isDragged ? nil : .snappy(duration: 0.2), value: drag?.target)
+                    .zIndex(isDragged || settling?.tab == tab ? 1 : 0)
+                    .onTapGesture { selectedRaw = tab.id }
+                    // Gemessen an der Leiste, die stillsteht, nicht am Tab, der sich bewegt.
+                    .gesture(DragGesture(minimumDistance: 3, coordinateSpace: .named("tabBar"))
+                        .onChanged { value in moveTab(tab, from: index, by: value.translation.width) }
+                        .onEnded { _ in endDrag() })
+                    .help("\(tab.title) · zum Umsortieren ziehen")
+                    .accessibilityLabel(tab.title)
+                    .accessibilityAddTraits(isSelected ? [.isButton, .isSelected] : .isButton)
             }
         }
+        .coordinateSpace(.named("tabBar"))
+        .onGeometryChange(for: CGFloat.self, of: { $0.size.width }) { barWidth = $0 }
         .padding(4)
         .surface(cornerRadius: 12)
+    }
+
+    /// Abstand von einem Platz zum nächsten.
+    private var slotWidth: CGFloat {
+        (barWidth + Self.tabSpacing) / CGFloat(max(tabs.count, 1))
+    }
+
+    private func offset(for tab: MenuTab, at index: Int) -> CGFloat {
+        if let settling, settling.tab == tab { return settling.offset }
+        guard let drag else { return 0 }
+        if drag.tab == tab { return drag.translation }
+        // Tabs zwischen altem und neuem Platz weichen um einen Platz aus.
+        if drag.start < drag.target, index > drag.start, index <= drag.target { return -slotWidth }
+        if drag.target < drag.start, index >= drag.target, index < drag.start { return slotWidth }
+        return 0
+    }
+
+    private func moveTab(_ tab: MenuTab, from index: Int, by translation: CGFloat) {
+        let target = min(max(index + Int((translation / max(slotWidth, 1)).rounded()), 0), tabs.count - 1)
+        drag = TabDrag(tab: tab, start: index, target: target, translation: translation)
+    }
+
+    /// Reihenfolge speichern; der Tab gleitet vom Zeiger auf seinen neuen Platz.
+    private func endDrag() {
+        guard let drag else { return }
+        var order = tabs
+        order.remove(at: drag.start)
+        order.insert(drag.tab, at: drag.target)
+        var instant = Transaction()
+        instant.disablesAnimations = true
+        withTransaction(instant) {
+            orderRaw = order.map(\.id).joined(separator: ",")
+            settling = (drag.tab, drag.translation - CGFloat(drag.target - drag.start) * slotWidth)
+            self.drag = nil
+        }
+        DispatchQueue.main.async {
+            withAnimation(.snappy(duration: 0.22)) { settling = nil }
+        }
     }
 
     // MARK: Karte der gewählten Funktion
@@ -242,6 +366,11 @@ struct MenuBarView: View {
                 OptionRow(title: "Netzteil angesteckt", isOn: $settings.notchCharging)
                 OptionRow(title: "Entsperrt", isOn: $settings.notchUnlock)
             }
+        case .dockToggle:
+            Text("Ein weiterer Klick aufs Dock-Symbol holt alle Fenster zurück.")
+                .font(.system(size: 10))
+                .foregroundStyle(.tertiary)
+                .fixedSize(horizontal: false, vertical: true)
         case .windowFetcher:
             Text("Ist das Fenster minimiert, kommt es zurück. Hat die App keins mehr, öffnet sie ein neues.")
                 .font(.system(size: 10))
@@ -313,27 +442,12 @@ enum MenuTab: Hashable, Identifiable {
     }
 }
 
-/// Schiebt den gezogenen Tab an die Stelle, über der er gerade ist.
-private struct TabDrop: DropDelegate {
-    let target: MenuTab
-    let tabs: [MenuTab]
-    @Binding var dragging: MenuTab?
-    let save: ([MenuTab]) -> Void
-
-    func dropEntered(info: DropInfo) {
-        guard let dragging, dragging != target,
-              let from = tabs.firstIndex(of: dragging), let to = tabs.firstIndex(of: target) else { return }
-        var order = tabs
-        order.move(fromOffsets: IndexSet(integer: from), toOffset: to > from ? to + 1 : to)
-        withAnimation(.snappy(duration: 0.2)) { save(order) }
-    }
-
-    func dropUpdated(info: DropInfo) -> DropProposal? { DropProposal(operation: .move) }
-
-    func performDrop(info: DropInfo) -> Bool {
-        dragging = nil
-        return true
-    }
+/// Zustand beim Umsortieren der Leiste.
+private struct TabDrag {
+    let tab: MenuTab
+    let start: Int
+    let target: Int
+    let translation: CGFloat
 }
 
 // MARK: Leistung
@@ -344,7 +458,6 @@ private struct PerformanceCard: View {
     @ObservedObject var settings: Settings
 
     var body: some View {
-        let maximum = ResourceMonitor.estimatedMaximum(settings)
         VStack(alignment: .leading, spacing: 10) {
             Text("So viel braucht die App gerade.").font(.system(size: 11)).foregroundStyle(.secondary)
             Divider()
@@ -352,11 +465,15 @@ private struct PerformanceCard: View {
             metric("Arbeitsspeicher", value: megabytes(monitor.samples.last?.memory),
                    values: monitor.samples.map(\.memory), floor: 50)
             Divider()
-            InfoRow(title: "Höchstens", caption: "Geschätzt: alle eingeschalteten Funktionen gleichzeitig aktiv",
-                    value: "\(percent(maximum.cpu)) · \(megabytes(maximum.memory))")
+            InfoRow(title: "Bei geschlossenem Fenster", caption: monitor.backgroundCPU == nil
+                        ? "Erscheint ab dem zweiten Öffnen"
+                        : "Während das Fenster zu war, zuletzt \(duration(monitor.backgroundDuration))",
+                    value: percent(monitor.backgroundCPU))
+            InfoRow(title: "Im Schnitt seit Start", caption: "Gemessen, ohne die ersten 30 Sekunden nach dem Start",
+                    value: percent(monitor.averageCPU))
             InfoRow(title: "Speicher-Spitze", caption: "Seit dem Start der App",
                     value: megabytes(monitor.peakMemory))
-            Text("100 % CPU entspricht einem voll ausgelasteten Prozessorkern, wie in der Aktivitätsanzeige.")
+            Text("100 % CPU entspricht einem voll ausgelasteten Prozessorkern, wie in der Aktivitätsanzeige. „Jetzt“ enthält das Messen und Zeichnen dieses Fensters selbst, deshalb ist der Wert bei geschlossenem Fenster der aussagekräftige.")
                 .font(.system(size: 10))
                 .foregroundStyle(.tertiary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -383,6 +500,10 @@ private struct PerformanceCard: View {
     private func percent(_ value: Double?) -> String {
         guard let value else { return "–" }
         return value.formatted(.number.precision(.fractionLength(value < 10 ? 1 : 0))) + " %"
+    }
+
+    private func duration(_ seconds: TimeInterval) -> String {
+        seconds < 120 ? "\(Int(seconds)) Sekunden" : seconds < 7200 ? "\(Int(seconds / 60)) Minuten" : "\(Int(seconds / 3600)) Stunden"
     }
 
     private func megabytes(_ value: Double?) -> String {

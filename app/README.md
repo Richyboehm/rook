@@ -5,14 +5,18 @@ Funktion einzeln ein und aus:
 
 - **Widgets** auf dem Sperrbildschirm: Musik (Spotify), nächster Termin, Wetter, Akku & AirPods
 - **StandBy**: große Uhr auf dem Sperrbildschirm, während der Mac lädt
-- **Notch Island**: Musik, Screenshots, Ablage, Termine, Timer und mehr an der Notch
+- **Notch Island**: Musik, Screenshots, Ablage, Termine und Timer an der Notch; mit zwei Fingern
+  dreht man wie auf einem Rad zur Schnellnotiz und zur Lautstärke pro App
 - **Fensterholer**: Cmd + Tab bringt immer ein Fenster nach vorne
+- **Dock wie Windows**: nochmal aufs Dock-Symbol der vorderen App klicken minimiert ihre Fenster,
+  der nächste Klick holt alle zurück
 - **Mausrad**: kehrt Scrollen und Zoomen nur für die Maus um, das Trackpad bleibt unverändert
 - **Lautstärke**: eigene Lautstärke für jede App, wie unter Windows
 - **Downloads-Aufräumer**: sortiert neue Downloads nach Dateityp
 
 Ein Klick auf den Raben in der Menüleiste öffnet ein kleines Fenster mit allen Funktionen
-(per Ziehen umsortierbar) und einer Leistungsanzeige mit CPU und Arbeitsspeicher von Rook.
+(per Ziehen umsortierbar) und einer Leistungsanzeige mit CPU und Arbeitsspeicher von Rook,
+auch für die Zeit, in der das Fenster zu war.
 In der Kommandozentrale lässt sich auch der Browser
 [Rook Search](../README.md) laden und installieren.
 
@@ -20,7 +24,7 @@ Rook hieß früher Richy. Die interne Kennung `de.richyboehm.richy` ist gebliebe
 Einstellungen und Erlaubnisse beim Umbenennen erhalten bleiben.
 
 Ausgeschaltete Funktionen laufen gar nicht. Alles andere reagiert auf Meldungen von macOS,
-statt regelmäßig nachzusehen. Gemessen mit laufender Musik: etwa 0,2 % CPU und 25 MB.
+statt regelmäßig nachzusehen. Gemessen mit allen Funktionen an: etwa 0,0 % CPU und 20 MB.
 
 ```bash
 cd app

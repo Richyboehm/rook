@@ -2,9 +2,10 @@ import AppKit
 import Combine
 import SwiftUI
 
-/// Rahmenloses Fenster, das nie den Fokus stiehlt.
+/// Rahmenloses Fenster, das den Fokus nur nimmt, solange die Schnellnotiz offen ist.
 final class IslandPanel: NSPanel {
-    override var canBecomeKey: Bool { false }
+    var allowsKeyboard = false
+    override var canBecomeKey: Bool { allowsKeyboard }
     override var canBecomeMain: Bool { false }
 }
 

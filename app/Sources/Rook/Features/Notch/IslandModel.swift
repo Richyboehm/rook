@@ -31,6 +31,32 @@ final class IslandModel: ObservableObject {
     /// Was dauerhaft neben der Notch steht, nach Wichtigkeit.
     enum Live: Equatable { case timer, meeting, music }
 
+    /// Seiten der aufgeklappten Notch, mit zwei Fingern im Kreis durchzuwischen.
+    enum Page: Int, CaseIterable {
+        case main, note, volume
+    }
+
+    /// Beim Zuklappen geht es immer zurück auf die normale Seite.
+    @Published private(set) var page: Page = .main
+    /// Das Rad mit den Seiten; es dreht ohne SwiftUI und meldet nur die neue Seite.
+    let wheel = PageWheel()
+
+    init() {
+        wheel.onPageChange = { [weak self] page in self?.page = page }
+    }
+
+    /// Finger bewegt sich (negativ = nach links): Das Rad dreht direkt mit.
+    func swipe(by delta: CGFloat) { wheel.drag(by: delta) }
+
+    /// Finger losgelassen: eine Seite weiter oder zurück, mit Schwung.
+    func endSwipe(flick: CGFloat) { wheel.end(flick: flick) }
+
+    /// Ein Klick auf einen Punkt.
+    func show(_ target: Page) { wheel.show(target) }
+
+    /// Beim Zuklappen: ohne Animation zurück auf die normale Seite.
+    func resetPage() { wheel.reset() }
+
     @Published var notch = CGSize(width: 180, height: 32)
     @Published var hovering = false
     /// Gerade wird eine Datei über die Insel gezogen.

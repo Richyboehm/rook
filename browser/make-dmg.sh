@@ -15,4 +15,11 @@ ln -s /Applications "$STAGE/Programme"
 mkdir -p ../download
 hdiutil create -quiet -volname "Rook Search" -srcfolder "$STAGE" -ov -format UDZO -imagekey zlib-level=9 "$DMG"
 rm -rf "$STAGE"
-echo "Fertig: $(cd ../download && pwd)/Rook-Search.dmg ($(du -h "$DMG" | cut -f1))"
+
+# Daneben die Version, damit die Menüleisten-App Rook nur dann „Aktualisieren“ anbietet,
+# wenn es wirklich etwas Neues gibt. Für ein Update CFBundleVersion in Info.plist erhöhen.
+VERSION=$(/usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' "$APP/Contents/Info.plist")
+BUILD=$(/usr/libexec/PlistBuddy -c 'Print CFBundleVersion' "$APP/Contents/Info.plist")
+printf '{ "version": "%s", "build": %s }\n' "$VERSION" "$BUILD" > ../download/Rook-Search.json
+
+echo "Fertig: $(cd ../download && pwd)/Rook-Search.dmg ($(du -h "$DMG" | cut -f1)), Version $VERSION ($BUILD)"

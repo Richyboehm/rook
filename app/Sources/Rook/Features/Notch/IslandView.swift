@@ -4,6 +4,7 @@ struct IslandView: View {
     @ObservedObject var spotify: Spotify
     @ObservedObject var model: IslandModel
     @ObservedObject var settings: Settings
+    let volume: AppVolume
 
     typealias Live = IslandModel.Live
     typealias Peek = IslandModel.Peek
@@ -182,6 +183,51 @@ struct IslandView: View {
     private var expandedContent: some View {
         VStack(alignment: .leading, spacing: 12) {
             topStrip
+            // Die Seiten werden hier gebaut; beim Wischen dreht das Rad nur ihre Ebenen.
+            PageWheelHost(wheel: model.wheel,
+                          pages: Dictionary(uniqueKeysWithValues: IslandModel.Page.allCases.map { page in
+                              (page, AnyView(self.page(page, active: page == model.page)
+                                  .frame(maxWidth: .infinity, alignment: .top)
+                                  .environment(\.colorScheme, .dark)))
+                          }))
+            if model.peek == nil { pageDots }
+        }
+        .padding(.horizontal, 20)
+        .padding(.bottom, 14)
+        .fixedSize(horizontal: false, vertical: true)
+        .frame(width: IslandModel.expandedWidth)
+        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height in
+            if abs(height - model.expandedHeight) > 0.5 { model.expandedHeight = height }
+        }
+    }
+
+    /// `active`: Die Seite steht still in der Mitte (nicht nur beim Drehen kurz zu sehen).
+    @ViewBuilder private func page(_ page: IslandModel.Page, active: Bool) -> some View {
+        switch page {
+        case .main: mainPage
+        case .note: NotePage(active: active)
+        case .volume: VolumePage(volume: volume, settings: settings)
+        }
+    }
+
+    /// Punkte für die Seiten; ein Klick springt auch hin.
+    private var pageDots: some View {
+        HStack(spacing: 7) {
+            ForEach(IslandModel.Page.allCases, id: \.self) { page in
+                Circle()
+                    .fill(.white.opacity(page == model.page ? 0.9 : 0.25))
+                    .frame(width: 5, height: 5)
+                    .padding(3)
+                    .contentShape(Rectangle())
+                    .onTapGesture { model.show(page) }
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .help("Mit zwei Fingern wischen für die nächste Seite")
+    }
+
+    private var mainPage: some View {
+        VStack(alignment: .leading, spacing: 12) {
             if model.peek == .timerDone {
                 banner(symbol: "timer", text: "Timer abgelaufen", color: .orange)
             }
@@ -195,13 +241,6 @@ struct IslandView: View {
             if settings.notchScreenshots { captureRow }
             if settings.notchShelf && (!model.shelf.isEmpty || model.dragging) { shelfSection }
             bottomBar
-        }
-        .padding(.horizontal, 20)
-        .padding(.bottom, 14)
-        .fixedSize(horizontal: false, vertical: true)
-        .frame(width: IslandModel.expandedWidth)
-        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height in
-            if abs(height - model.expandedHeight) > 0.5 { model.expandedHeight = height }
         }
     }
 
@@ -718,3 +757,4 @@ private struct TimerWheels: View {
         }
     }
 }
+

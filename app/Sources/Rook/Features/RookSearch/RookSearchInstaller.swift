@@ -12,13 +12,29 @@ final class RookSearchInstaller: ObservableObject {
         case failed(String)
     }
 
+    /// Version aus Info.plist (CFBundleShortVersionString und CFBundleVersion).
+    struct Version: Equatable, Decodable {
+        let version: String
+        let build: Int
+
+        static func > (lhs: Version, rhs: Version) -> Bool {
+            lhs.build != rhs.build ? lhs.build > rhs.build
+                : lhs.version.compare(rhs.version, options: .numeric) == .orderedDescending
+        }
+    }
+
     static let bundleID = "de.richyboehm.rook"
     static let download = URL(string: "https://richyboehm.github.io/rook/download/Rook-Search.dmg")!
+    /// Liegt neben der DMG; `browser/make-dmg.sh` schreibt sie.
+    static let latestInfo = URL(string: "https://richyboehm.github.io/rook/download/Rook-Search.json")!
     static let website = URL(string: "https://richyboehm.github.io/rook/download/")!
     private static let target = URL(fileURLWithPath: "/Applications/Rook Search.app")
 
     @Published private(set) var phase: Phase = .idle
     @Published private(set) var installedURL: URL?
+    @Published private(set) var installedVersion: Version?
+    /// Neueste Version auf der Download-Seite; nil, solange unbekannt (z. B. offline).
+    @Published private(set) var latestVersion: Version?
 
     private var task: URLSessionDownloadTask?
     private var progress: NSKeyValueObservation?
@@ -27,6 +43,29 @@ final class RookSearchInstaller: ObservableObject {
 
     func refresh() {
         installedURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: Self.bundleID)
+        installedVersion = installedURL.flatMap { Bundle(url: $0) }.flatMap { bundle in
+            guard let version = bundle.infoDictionary?["CFBundleShortVersionString"] as? String,
+                  let build = (bundle.infoDictionary?["CFBundleVersion"] as? String).flatMap(Int.init) else { return nil }
+            return Version(version: version, build: build)
+        }
+    }
+
+    /// Gibt es auf der Download-Seite eine neuere Version als die installierte?
+    var updateAvailable: Bool {
+        guard let installedVersion, let latestVersion else { return false }
+        return latestVersion > installedVersion
+    }
+
+    /// Fragt die kleine Versionsdatei ab; nur, wenn die Kommandozentrale die Karte zeigt.
+    func checkForUpdate() {
+        var request = URLRequest(url: Self.latestInfo)
+        request.cachePolicy = .reloadIgnoringLocalCacheData
+        URLSession.shared.dataTask(with: request) { [weak self] data, _, _ in
+            let latest = data.flatMap { try? JSONDecoder().decode(Version.self, from: $0) }
+            DispatchQueue.main.async {
+                MainActor.assumeIsolated { if let latest { self?.latestVersion = latest } }
+            }
+        }.resume()
     }
 
     var isBusy: Bool {

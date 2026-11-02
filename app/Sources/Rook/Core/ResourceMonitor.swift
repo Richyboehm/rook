@@ -15,6 +15,38 @@ final class ResourceMonitor: ObservableObject {
     /// Die letzten 60 Sekunden.
     @Published private(set) var samples: [Sample] = []
     @Published private(set) var peakMemory: Double = 0
+    /// CPU im Schnitt seit dem Start, ohne die ersten 30 Sekunden (das Starten selbst
+    /// kostet kurz etwas). Gemessen, nicht geschätzt; nil, solange die App noch frisch ist.
+    @Published private(set) var averageCPU: Double?
+
+    /// CPU, während das Raben-Fenster zu war: vom letzten Schließen bis zum Öffnen.
+    /// Das ist der eigentliche Verbrauch im Alltag; gemessen ohne eigenen Takt.
+    @Published private(set) var backgroundCPU: Double?
+    @Published private(set) var backgroundDuration: TimeInterval = 0
+
+    /// Stand 30 Sekunden nach dem Start; einmal gesetzt von `recordBaseline()`.
+    private static var baseline: (cpu: Double, time: TimeInterval)?
+    /// Stand beim letzten Schließen des Raben-Fensters.
+    private static var closedMark: (cpu: Double, time: TimeInterval)?
+
+    /// Beim Schließen des Raben-Fensters: Stand merken.
+    static func windowClosed() {
+        closedMark = (cpuSeconds(), ProcessInfo.processInfo.systemUptime)
+    }
+
+    /// Beim Öffnen, bevor das Fenster selbst etwas kostet: Verbrauch seit dem Schließen.
+    /// Beim ersten Öffnen nach dem Start zählt die Zeit ab 30 Sekunden nach dem Start.
+    func windowOpened() {
+        let cpu = Self.cpuSeconds(), now = ProcessInfo.processInfo.systemUptime
+        guard let mark = Self.closedMark ?? Self.baseline, now - mark.time > 3 else { return }
+        backgroundCPU = max(0, (cpu - mark.cpu) / (now - mark.time) * 100)
+        backgroundDuration = now - mark.time
+    }
+
+    /// Einmal 30 Sekunden nach dem Start aufrufen. Kostet sonst nichts, kein Takt.
+    static func recordBaseline() {
+        baseline = (cpuSeconds(), ProcessInfo.processInfo.systemUptime)
+    }
 
     private var timer: Timer?
     private var last: (cpu: Double, time: TimeInterval)?
@@ -39,6 +71,9 @@ final class ResourceMonitor: ObservableObject {
         let now = ProcessInfo.processInfo.systemUptime
         let memory = Self.memory()
         peakMemory = max(memory.peak, memory.now)
+        if let base = Self.baseline, now - base.time > 5 {
+            averageCPU = max(0, (cpu - base.cpu) / (now - base.time) * 100)
+        }
         defer { last = (cpu, now) }
         guard let last, now > last.time else { return }
         counter += 1
@@ -66,32 +101,4 @@ final class ResourceMonitor: ObservableObject {
         guard result == KERN_SUCCESS else { return (0, 0) }
         return (Double(info.phys_footprint) / 1_048_576, Double(info.ledger_phys_footprint_peak) / 1_048_576)
     }
-
-    // MARK: Schätzung
-
-    /// Grobe Obergrenze mit den eingeschalteten Funktionen: Grundbedarf plus, was jede Funktion
-    /// in ihrem aufwendigsten Moment zusätzlich braucht (z. B. StandBy mit Uhr und Cover).
-    static func estimatedMaximum(_ settings: Settings) -> (cpu: Double, memory: Double) {
-        var cpu = base.cpu, memory = base.memory
-        for feature in Feature.allCases where feature.isOn(settings).wrappedValue {
-            guard let cost = costs[feature] else { continue }
-            cpu += cost.cpu
-            memory += cost.memory
-        }
-        return (cpu, memory)
-    }
-
-    /// Menüleiste, Notch und Spotify im Leerlauf. Gemessen mit laufender Musik: etwa 23 MB und 0,2 %.
-    static let base: (cpu: Double, memory: Double) = (0.5, 25)
-
-    /// Zusätzlich pro Funktion im aufwendigsten Moment (Animationen, Cover, Ton-Abzweigung).
-    static let costs: [Feature: (cpu: Double, memory: Double)] = [
-        .lockWidget: (1, 8),
-        .standBy: (1.5, 12),
-        .notch: (2, 10),
-        .windowFetcher: (0.2, 1),
-        .mouseWheel: (0.3, 1),
-        .appVolume: (1.5, 4),
-        .downloads: (0.5, 2),
-    ]
 }
