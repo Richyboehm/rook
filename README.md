@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="assets/logo.png" width="96" height="96" alt="Rook logo">
+  <img src="assets/logo.png" width="96" height="96" alt="Rook Search logo">
 </p>
 
-<h1 align="center">Rook</h1>
+<h1 align="center">Rook Search</h1>
 
 <p align="center">
   A calm, beautiful and private new tab page.<br>
@@ -10,16 +10,16 @@
 </p>
 
 <p align="center">
-  <img src="assets/screenshot.png" alt="Rook new tab page with clock, search bar and favorites" width="800">
+  <img src="assets/screenshot.png" alt="Rook Search new tab page with clock, search bar and favorites" width="800">
 </p>
 
 <p align="center">
-  <a href="https://richyboehm.github.io/rook/download/"><b>Download Rook for Mac</b></a>
+  <a href="https://richyboehm.github.io/rook/download/"><b>Download Rook Search for Mac</b></a>
 </p>
 
-## Why Rook?
+## Why Rook Search?
 
-Most new tab pages are either plain or full of news, ads and tracking. Rook gives you a polished, Apple-style start page while your browser keeps doing what it does best: security, passwords, sync and updates.
+Most new tab pages are either plain or full of news, ads and tracking. Rook Search gives you a polished, Apple-style start page while your browser keeps doing what it does best: security, passwords, sync and updates.
 
 - **Beautiful** – dark glass design, large clock with greeting, four hand-made backgrounds or your own photo
 - **Private** – no account, no server, no analytics. Everything is stored locally in your browser
@@ -44,23 +44,23 @@ Open **https://richyboehm.github.io/rook/** and set it as your home and new tab 
 
 **Safari (Mac)**
 Safari → Settings → General:
-- *Homepage*: the Rook address
+- *Homepage*: the Rook Search address
 - *New windows open with*: Homepage
 - *New tabs open with*: Homepage
 
 **Firefox**
-Settings → Home → *Homepage and new windows*: Custom URLs → the Rook address.
+Settings → Home → *Homepage and new windows*: Custom URLs → the Rook Search address.
 Firefox does not allow custom new tab pages by default – use the add-on *New Tab Override* for that.
 
 **Chrome, Edge, Brave**
-Settings → On startup → *Open a specific page* → the Rook address.
+Settings → On startup → *Open a specific page* → the Rook Search address.
 For new tabs, these browsers require an extension that redirects the new tab page to a URL of your choice.
 
-## Rook Browser for Mac
+## Rook Search Browser for Mac
 
-Rook is also a standalone Mac browser: its own app and window, with Rook as the start page in every new tab. Pages are rendered by **WebKit, Safari’s engine**, so it gets the same security updates with every macOS update, plus Apple’s fraudulent website warning.
+Rook Search is also a standalone Mac browser: its own app and window, with Rook Search as the start page in every new tab. Pages are rendered by **WebKit, Safari’s engine**, so it gets the same security updates with every macOS update, plus Apple’s fraudulent website warning.
 
-- Rook’s own tab bar in a glass look: favicons, pinned tabs, drag to reorder, right-click menu (pin, duplicate, move to new window, close others)
+- Rook Search’s own tab bar in a glass look: favicons, pinned tabs, drag to reorder, right-click menu (pin, duplicate, move to new window, close others)
 - Address bar like Safari: shows just the site name while browsing, the full address when you click in; local suggestions from your favorites and history while typing (nothing is sent to a search engine)
 - Settings window (⌘,): search engine, restore tabs, download folder or “always ask”, default browser, blocker and exceptions, per-site camera/microphone permissions and zoom
 - Favorites: ⌘D adds the current page to the start page; import bookmarks from an HTML export of Safari, Chrome or Firefox
@@ -78,7 +78,7 @@ Rook is also a standalone Mac browser: its own app and window, with Rook as the 
 
 **How good is the blocker?** Banner ads, ad pop-ups and most trackers are blocked reliably – about the level of well-known Safari content blockers. It cannot remove ads inside YouTube videos, get around “please disable your ad blocker” walls, or hide sponsored posts that look like normal content (that would need scripts injected into pages, which WebKit’s blocker does not do). It also cannot count what it blocked. Rule types that WebKit cannot express (regular expressions, script rules, procedural selectors, hiding exceptions) are skipped.
 
-**Network connections Rook makes itself:** only the weekly download of the three filter lists from easylist.to (HTTPS, no cookies, nothing about you or your browsing is sent). No telemetry, no crash reports, no search suggestions. Website logos on the start page come from Google’s favicon service (can be switched off), and Apple’s fraudulent website warning is part of WebKit.
+**Network connections Rook Search makes itself:** only the weekly download of the three filter lists from easylist.to (HTTPS, no cookies, nothing about you or your browsing is sent). No telemetry, no crash reports, no search suggestions. Website logos on the start page come from Google’s favicon service (can be switched off), and Apple’s fraudulent website warning is part of WebKit.
 
 The filter lists are not part of this repository; they are downloaded at runtime and remain under [their own licence](https://easylist.to/pages/licence.html) (GPLv3 or CC BY-SA 3.0).
 
@@ -95,17 +95,17 @@ The filter lists are not part of this repository; they are downloaded at runtime
 git clone https://github.com/richyboehm/rook.git
 cd rook/browser
 ./build.sh
-open build/Rook.app
+open "build/Rook Search.app"
 ```
 
-Then move `Rook.app` into your Applications folder. Because you built it yourself, macOS opens it without a warning.
+Then move `Rook Search.app` into your Applications folder. Because you built it yourself, macOS opens it without a warning.
 
 **Tests:** `browser/Tests/run.sh` (logic: address bar, link safety, downloads, filter conversion) and `browser/Tests/run-blocker.sh` (downloads the real filter lists and checks with the real WebKit engine that ads and trackers are blocked and that per-site exceptions work).
 
 ### Download page
 
-The page in `download/` (online at https://richyboehm.github.io/rook/download/) offers `download/Rook.dmg`.
-After a change to the app, run `browser/build.sh`, then `browser/make-dmg.sh`, and commit the new `Rook.dmg`.
+The page in `download/` (online at https://richyboehm.github.io/rook/download/) offers `download/Rook-Search.dmg` (https://richyboehm.github.io/rook/download/Rook-Search.dmg).
+After a change to the app, run `browser/build.sh`, then `browser/make-dmg.sh`, and commit the new `Rook-Search.dmg`.
 
 ## Keyboard shortcuts
 
@@ -119,7 +119,7 @@ After a change to the app, run `browser/build.sh`, then `browser/make-dmg.sh`, a
 
 - All settings and favorites live in your browser’s `localStorage`. Nothing is sent anywhere.
 - Your searches go directly to the search engine you chose.
-- Website logos are loaded from Google’s favicon service. You can turn this off under **Settings → Privacy**; Rook then shows colored letters instead.
+- Website logos are loaded from Google’s favicon service. You can turn this off under **Settings → Privacy**; Rook Search then shows colored letters instead.
 - Only `http` and `https` links are accepted as favorites, and imported backups are validated.
 
 ## Customize
@@ -136,7 +136,7 @@ To add a search engine, extend `ENGINES` in `app.js`. To change the suggested fa
 
 ## Credits
 
-The backgrounds *Obsidian*, *Aurora*, *Ember* and *Midnight* were generated for Rook and are covered by the same license as the code.
+The backgrounds *Obsidian*, *Aurora*, *Ember* and *Midnight* were generated for Rook Search and are covered by the same license as the code.
 The background *Skulptur* is a photo from [Unsplash](https://unsplash.com) under the [Unsplash License](https://unsplash.com/license).
 
 ## License
@@ -147,8 +147,8 @@ The background *Skulptur* is a photo from [Unsplash](https://unsplash.com) under
 
 ### Deutsch
 
-**Rook** ist eine ruhige, schöne und private Startseite für deinen Browser: Uhr mit Begrüßung, große Suchleiste, deine Favoriten und ein Glas-Look im Apple-Stil. Alles wird nur lokal in deinem Browser gespeichert – kein Konto, kein Server, kein Tracking.
+**Rook Search** ist eine ruhige, schöne und private Startseite für deinen Browser: Uhr mit Begrüßung, große Suchleiste, deine Favoriten und ein Glas-Look im Apple-Stil. Alles wird nur lokal in deinem Browser gespeichert – kein Konto, kein Server, kein Tracking.
 
-**Einrichten in Safari:** Safari → Einstellungen → Allgemein → bei *Homepage* die Rook-Adresse eintragen und bei *Neue Fenster öffnen mit* sowie *Neue Tabs öffnen mit* jeweils **Homepage** wählen.
+**Einrichten in Safari:** Safari → Einstellungen → Allgemein → bei *Homepage* die Adresse von Rook Search eintragen und bei *Neue Fenster öffnen mit* sowie *Neue Tabs öffnen mit* jeweils **Homepage** wählen.
 
 Beim ersten Öffnen hilft dir eine kurze Begrüßung beim Einrichten. Später findest du alles über das Zahnrad unten rechts.

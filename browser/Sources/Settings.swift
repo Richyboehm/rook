@@ -111,7 +111,7 @@ enum Privacy {
 
     static func confirmClearWebsiteData(in window: NSWindow?) {
         confirm("Cookies und Website-Daten löschen?",
-                "Du wirst auf allen Websites abgemeldet, und gespeicherte Website-Daten sowie der Cache werden gelöscht. Deine Rook-Startseite (Favoriten, Einstellungen) bleibt erhalten.",
+                "Du wirst auf allen Websites abgemeldet, und gespeicherte Website-Daten sowie der Cache werden gelöscht. Deine Startseite von Rook Search (Favoriten, Einstellungen) bleibt erhalten.",
                 in: window) { clearWebsiteData {} }
     }
 

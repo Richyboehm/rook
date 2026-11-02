@@ -3,9 +3,9 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleName</key>
-	<string>Rook</string>
+	<string>Rook Search</string>
 	<key>CFBundleDisplayName</key>
-	<string>Rook</string>
+	<string>Rook Search</string>
 	<key>CFBundleIdentifier</key>
 	<string>de.richyboehm.rook</string>
 	<key>CFBundleExecutable</key>

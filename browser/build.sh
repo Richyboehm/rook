@@ -1,5 +1,5 @@
 #!/bin/sh
-# Builds Rook.app (Apple silicon + Intel) into browser/build/.
+# Builds "Rook Search.app" (Apple silicon + Intel) into browser/build/.
 # Needs Apple's Command Line Tools:  xcode-select --install
 set -e
 cd "$(dirname "$0")"
@@ -9,7 +9,7 @@ if [ -d /Library/Developer/CommandLineTools ] && ! xcrun swiftc --version >/dev/
   export DEVELOPER_DIR=/Library/Developer/CommandLineTools
 fi
 
-APP=build/Rook.app
+APP="build/Rook Search.app"
 SDK=$(xcrun --sdk macosx --show-sdk-path)
 rm -rf build
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources/start"

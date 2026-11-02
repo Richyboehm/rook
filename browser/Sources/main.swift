@@ -39,8 +39,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         Settings.welcomeShown = true
         guard let window = current?.window else { return }
         let alert = NSAlert()
-        alert.messageText = "Rook als Standardbrowser?"
-        alert.informativeText = "Links aus anderen Apps, zum Beispiel aus Mail, öffnen sich dann in Rook. Lesezeichen aus einem anderen Browser kannst du hier ebenfalls übernehmen."
+        alert.messageText = "Rook Search als Standardbrowser?"
+        alert.informativeText = "Links aus anderen Apps, zum Beispiel aus Mail, öffnen sich dann in Rook Search. Lesezeichen aus einem anderen Browser kannst du hier ebenfalls übernehmen."
         alert.addButton(withTitle: "Als Standardbrowser verwenden")
         alert.addButton(withTitle: "Lesezeichen importieren …")
         alert.addButton(withTitle: "Später")
@@ -58,7 +58,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         guard running > 0 else { return .terminateNow }
         let alert = NSAlert()
         alert.messageText = running == 1 ? "Ein Download läuft noch" : "\(running) Downloads laufen noch"
-        alert.informativeText = "Wenn du Rook jetzt beendest, werden sie abgebrochen."
+        alert.informativeText = "Wenn du Rook Search jetzt beendest, werden sie abgebrochen."
         alert.addButton(withTitle: "Weiter laden")
         alert.addButton(withTitle: "Trotzdem beenden")
         return alert.runModal() == .alertSecondButtonReturn ? .terminateNow : .terminateCancel
@@ -205,8 +205,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let alert = NSAlert()
         alert.messageText = "Werbe- und Trackingschutz"
         alert.informativeText = """
-        Rook blockiert Werbung und Tracker mit den Filterlisten \(blocker.sources.map(\.name).joined(separator: ", ")) von easylist.to. \
-        Die Listen werden einmal pro Woche direkt von easylist.to geladen. Das ist die einzige Verbindung, die Rook selbst aufbaut. \
+        Rook Search blockiert Werbung und Tracker mit den Filterlisten \(blocker.sources.map(\.name).joined(separator: ", ")) von easylist.to. \
+        Die Listen werden einmal pro Woche direkt von easylist.to geladen. Das ist die einzige Verbindung, die Rook Search selbst aufbaut. \
         Welche Seiten du besuchst, erfährt dabei niemand.
 
         Gut geblockt werden Werbebanner, Werbe-Pop-ups und die meisten Tracker.
@@ -258,18 +258,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private func makeMenu() -> NSMenu {
         let main = NSMenu()
 
-        let app = submenu(main, "Rook")
-        app.addItem(withTitle: "Über Rook", action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: "")
+        let app = submenu(main, "Rook Search")
+        app.addItem(withTitle: "Über Rook Search", action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: "")
         app.addItem(.separator())
         item(app, "Einstellungen …", #selector(showSettings), ",", target: self)
-        item(app, "Rook als Standardbrowser festlegen …", #selector(makeDefaultBrowser), "", target: self)
+        item(app, "Rook Search als Standardbrowser festlegen …", #selector(makeDefaultBrowser), "", target: self)
         app.addItem(.separator())
-        app.addItem(withTitle: "Rook ausblenden", action: #selector(NSApplication.hide(_:)), keyEquivalent: "h")
+        app.addItem(withTitle: "Rook Search ausblenden", action: #selector(NSApplication.hide(_:)), keyEquivalent: "h")
         let others = app.addItem(withTitle: "Andere ausblenden", action: #selector(NSApplication.hideOtherApplications(_:)), keyEquivalent: "h")
         others.keyEquivalentModifierMask = [.command, .option]
         app.addItem(withTitle: "Alle einblenden", action: #selector(NSApplication.unhideAllApplications(_:)), keyEquivalent: "")
         app.addItem(.separator())
-        app.addItem(withTitle: "Rook beenden", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        app.addItem(withTitle: "Rook Search beenden", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
 
         let file = submenu(main, "Ablage")
         item(file, "Neuer Tab", #selector(newTab), "t", target: self)

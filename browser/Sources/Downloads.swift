@@ -127,7 +127,7 @@ final class DownloadManager: NSObject, WKDownloadDelegate {
     private func markAsDownloaded(_ file: URL, from source: URL?) {
         var url = file
         if let values = try? url.resourceValues(forKeys: [.quarantinePropertiesKey]), values.quarantineProperties != nil { return }
-        var properties: [String: Any] = [kLSQuarantineAgentNameKey as String: "Rook",
+        var properties: [String: Any] = [kLSQuarantineAgentNameKey as String: "Rook Search",
                                          kLSQuarantineTypeKey as String: kLSQuarantineTypeWebDownload as String]
         if let source { properties[kLSQuarantineDataURLKey as String] = source }
         var values = URLResourceValues()

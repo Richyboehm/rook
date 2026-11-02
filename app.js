@@ -1,4 +1,4 @@
-/* Rook – a beautiful, private new tab page.
+/* Rook Search – a beautiful, private new tab page.
  * Everything is stored locally in your browser (localStorage). No account, no server, no tracking.
  * MIT License – see LICENSE.
  */
@@ -18,16 +18,16 @@
       name: "Name", address: "Address", delete: "Delete", cancel: "Cancel", save: "Save", done: "Done",
       confirmDelete: "Delete “{name}”?", invalidUrl: "Please enter a valid web address (http or https).",
       settings: "Settings", general: "General", language: "Language", auto: "Automatic", yourName: "Your name",
-      showClock: "Show time and greeting", showLogo: "Show Rook logo", search: "Search", engine: "Search engine", look: "Look",
+      showClock: "Show time and greeting", showLogo: "Show Rook Search logo", search: "Search", engine: "Search engine", look: "Look",
       dim: "Darken background", accent: "Accent color", privacy: "Privacy",
       loadIcons: "Load website logos",
       loadIconsHint: "Logos are fetched from Google’s favicon service, which sees which sites are on your page. Turn this off to show letters instead.",
       backup: "Backup", export: "Export", import: "Import …", restartOnboarding: "Show welcome again",
-      resetAll: "Reset everything", confirmReset: "Reset Rook? Your favorites and settings will be removed.",
-      importFailed: "This file is not a valid Rook backup.", imageTooBig: "This image is too large. Please choose a smaller one.",
+      resetAll: "Reset everything", confirmReset: "Reset Rook Search? Your favorites and settings will be removed.",
+      importFailed: "This file is not a valid Rook Search backup.", imageTooBig: "This image is too large. Please choose a smaller one.",
       editHint: "Tip: hover a favorite and click ✎ to edit it, drag to reorder. Press / to search, 1 to 9 to open a favorite.",
       ownImage: "Own image …", skip: "Skip", back: "Back", next: "Next", letsGo: "Done",
-      welcomeTitle: "Welcome to Rook",
+      welcomeTitle: "Welcome to Rook Search",
       welcomeText: "A few settings and you are ready. Everything stays on this device.",
       whatName: "Your name", namePlaceholder: "Optional",
       engineTitle: "Search engine", engineText: "Your searches are sent here. You can change it later in the settings.",
@@ -40,7 +40,7 @@
       introApp: "A lean browser for the Mac, built on the Safari engine. Ads and trackers are blocked before they load, and your data stays on this device.",
       introWeb: "A calm start page for your browser. No account, no tracking. Everything stays on this device.",
       introGo: "Get started",
-      blockerTitle: "Ad blocker", blockerText: "Rook blocks ads and trackers inside the Safari engine, before a page loads. The filter lists come from EasyList and are updated weekly.",
+      blockerTitle: "Ad blocker", blockerText: "Rook Search blocks ads and trackers inside the Safari engine, before a page loads. The filter lists come from EasyList and are updated weekly.",
       listEasylist: "Ads", listEasylistDesc: "Banners and pop-ups on most websites.",
       listEasyprivacy: "Trackers", listEasyprivacyDesc: "Stops companies from following you across websites.",
       listEasylistgermany: "German websites", listEasylistgermanyDesc: "Extra rules for ads on German sites.",
@@ -56,12 +56,12 @@
       downloads: "Downloads", downloadFolder: "Save to", change: "Change …", showInFinder: "Show in Finder",
       standardFolder: "Default", askWhereToSave: "Ask where to save every download",
       downloadsHint: "Downloads are never opened automatically. macOS checks them the first time you open them.",
-      tabsTitle: "Tabs", restoreSession: "Reopen the tabs from last time when Rook starts",
-      defaultBrowser: "Default browser", isDefault: "Rook is your default browser.", notDefault: "Another browser is your default browser.",
-      makeDefault: "Make Rook the default browser", importBookmarks: "Import bookmarks …",
-      appOnlyHint: "Downloads, ad blocker and history settings are available in the Rook app for Mac.",
+      tabsTitle: "Tabs", restoreSession: "Reopen the tabs from last time when Rook Search starts",
+      defaultBrowser: "Default browser", isDefault: "Rook Search is your default browser.", notDefault: "Another browser is your default browser.",
+      makeDefault: "Make Rook Search the default browser", importBookmarks: "Import bookmarks …",
+      appOnlyHint: "Downloads, ad blocker and history settings are available in the Rook Search app for Mac.",
       blocker: "Ad & tracker blocker", blockerToggle: "Block ads and trackers", updateLists: "Update filter lists now",
-      updating: "Updating …", exceptions: "Not blocked on these sites", noExceptions: "None. Rook blocks on every website.",
+      updating: "Updating …", exceptions: "Not blocked on these sites", noExceptions: "None. Rook Search blocks on every website.",
       remove: "Remove", historyTitle: "History and website data", historyInfo: "{n} pages",
       clearHistory: "Delete history completely", clearData: "Delete cookies & website data",
       confirmClearHistory: "Delete your entire history? Visited pages, recently closed tabs, address bar suggestions and “Recently visited” are removed from this Mac. This cannot be undone.",
@@ -77,16 +77,16 @@
       name: "Name", address: "Adresse", delete: "Löschen", cancel: "Abbrechen", save: "Sichern", done: "Fertig",
       confirmDelete: "„{name}“ löschen?", invalidUrl: "Bitte eine gültige Webadresse eingeben (http oder https).",
       settings: "Einstellungen", general: "Allgemein", language: "Sprache", auto: "Automatisch", yourName: "Dein Name",
-      showClock: "Uhrzeit und Begrüßung anzeigen", showLogo: "Rook-Logo anzeigen", search: "Suche", engine: "Suchmaschine", look: "Aussehen",
+      showClock: "Uhrzeit und Begrüßung anzeigen", showLogo: "Rook-Search-Logo anzeigen", search: "Suche", engine: "Suchmaschine", look: "Aussehen",
       dim: "Hintergrund abdunkeln", accent: "Akzentfarbe", privacy: "Datenschutz",
       loadIcons: "Logos der Websites laden",
       loadIconsHint: "Die Logos kommen vom Favicon-Dienst von Google. Google sieht dadurch, welche Seiten auf deiner Startseite sind. Ausgeschaltet erscheinen stattdessen Buchstaben.",
       backup: "Sicherung", export: "Exportieren", import: "Importieren …", restartOnboarding: "Begrüßung erneut zeigen",
-      resetAll: "Alles zurücksetzen", confirmReset: "Rook zurücksetzen? Deine Favoriten und Einstellungen werden gelöscht.",
-      importFailed: "Diese Datei ist keine gültige Rook-Sicherung.", imageTooBig: "Das Bild ist zu groß. Bitte ein kleineres wählen.",
+      resetAll: "Alles zurücksetzen", confirmReset: "Rook Search zurücksetzen? Deine Favoriten und Einstellungen werden gelöscht.",
+      importFailed: "Diese Datei ist keine gültige Sicherung von Rook Search.", imageTooBig: "Das Bild ist zu groß. Bitte ein kleineres wählen.",
       editHint: "Tipp: Mit der Maus über einen Favoriten fahren und auf ✎ klicken, zum Umsortieren ziehen. / springt in die Suche, 1 bis 9 öffnet Favoriten.",
       ownImage: "Eigenes Bild …", skip: "Überspringen", back: "Zurück", next: "Weiter", letsGo: "Fertig",
-      welcomeTitle: "Willkommen bei Rook",
+      welcomeTitle: "Willkommen bei Rook Search",
       welcomeText: "Ein paar Einstellungen, dann kann es losgehen. Alles bleibt auf diesem Gerät.",
       whatName: "Dein Name", namePlaceholder: "Optional",
       engineTitle: "Suchmaschine", engineText: "Hierhin gehen deine Suchanfragen. Du kannst das später in den Einstellungen ändern.",
@@ -99,7 +99,7 @@
       introApp: "Ein schlanker Browser für den Mac, gebaut auf der Safari-Engine. Werbung und Tracker werden blockiert, bevor sie laden, und deine Daten bleiben auf diesem Gerät.",
       introWeb: "Eine ruhige Startseite für deinen Browser. Kein Konto, kein Tracking. Alles bleibt auf diesem Gerät.",
       introGo: "Loslegen",
-      blockerTitle: "Werbeblocker", blockerText: "Rook blockiert Werbung und Tracker direkt in der Safari-Engine, bevor eine Seite lädt. Die Filterlisten stammen von EasyList und werden wöchentlich aktualisiert.",
+      blockerTitle: "Werbeblocker", blockerText: "Rook Search blockiert Werbung und Tracker direkt in der Safari-Engine, bevor eine Seite lädt. Die Filterlisten stammen von EasyList und werden wöchentlich aktualisiert.",
       listEasylist: "Werbung", listEasylistDesc: "Banner und Pop-ups auf den meisten Websites.",
       listEasyprivacy: "Tracker", listEasyprivacyDesc: "Verhindert, dass Firmen dir über Websites hinweg folgen.",
       listEasylistgermany: "Deutsche Websites", listEasylistgermanyDesc: "Zusätzliche Regeln für Werbung auf deutschen Seiten.",
@@ -116,11 +116,11 @@
       standardFolder: "Standard", askWhereToSave: "Vor jedem Download fragen, wo gespeichert wird",
       downloadsHint: "Downloads werden nie automatisch geöffnet. macOS prüft sie beim ersten Öffnen.",
       tabsTitle: "Tabs", restoreSession: "Tabs vom letzten Mal beim Start wieder öffnen",
-      defaultBrowser: "Standardbrowser", isDefault: "Rook ist dein Standardbrowser.", notDefault: "Ein anderer Browser ist dein Standardbrowser.",
-      makeDefault: "Rook als Standardbrowser festlegen", importBookmarks: "Lesezeichen importieren …",
-      appOnlyHint: "Einstellungen zu Downloads, Werbeblocker und Verlauf gibt es in der Rook-App für den Mac.",
+      defaultBrowser: "Standardbrowser", isDefault: "Rook Search ist dein Standardbrowser.", notDefault: "Ein anderer Browser ist dein Standardbrowser.",
+      makeDefault: "Rook Search als Standardbrowser festlegen", importBookmarks: "Lesezeichen importieren …",
+      appOnlyHint: "Einstellungen zu Downloads, Werbeblocker und Verlauf gibt es in der App Rook Search für den Mac.",
       blocker: "Werbe- und Trackingschutz", blockerToggle: "Werbung und Tracker blockieren", updateLists: "Filterlisten jetzt aktualisieren",
-      updating: "Wird aktualisiert …", exceptions: "Auf diesen Websites nicht blockieren", noExceptions: "Keine. Rook blockiert auf allen Websites.",
+      updating: "Wird aktualisiert …", exceptions: "Auf diesen Websites nicht blockieren", noExceptions: "Keine. Rook Search blockiert auf allen Websites.",
       remove: "Entfernen", historyTitle: "Verlauf und Website-Daten", historyInfo: "{n} Seiten",
       clearHistory: "Verlauf restlos löschen", clearData: "Cookies und Website-Daten löschen",
       confirmClearHistory: "Den gesamten Verlauf löschen? Besuchte Seiten, zuletzt geschlossene Tabs, Vorschläge in der Adressleiste und „Zuletzt besucht“ werden von diesem Mac entfernt. Das lässt sich nicht rückgängig machen.",
@@ -772,7 +772,7 @@
     var blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
     var a = el("a");
     a.href = URL.createObjectURL(blob);
-    a.download = "rook-backup.json";
+    a.download = "rook-search-backup.json";
     document.body.appendChild(a);
     a.click();
     a.remove();

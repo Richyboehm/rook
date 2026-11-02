@@ -294,7 +294,7 @@ final class BrowserTab: NSObject, WKNavigationDelegate, WKUIDelegate {
              NSURLErrorServerCertificateHasUnknownRoot, NSURLErrorServerCertificateNotYetValid,
              NSURLErrorClientCertificateRejected, NSURLErrorSecureConnectionFailed:
             return ("Verbindung nicht sicher",
-                    "Das Sicherheitszertifikat dieser Seite ist ungültig. Jemand könnte versuchen, deine Daten mitzulesen. Rook öffnet die Seite deshalb nicht.")
+                    "Das Sicherheitszertifikat dieser Seite ist ungültig. Jemand könnte versuchen, deine Daten mitzulesen. Rook Search öffnet die Seite deshalb nicht.")
         default:
             return ("Seite nicht erreichbar", "Die Seite konnte nicht geladen werden.")
         }
@@ -323,7 +323,7 @@ final class BrowserTab: NSObject, WKNavigationDelegate, WKUIDelegate {
                  initiatedByFrame frame: WKFrameInfo, completionHandler: @escaping () -> Void) {
         guard let window = owner?.window else { completionHandler(); return }
         let alert = NSAlert()
-        alert.messageText = frame.securityOrigin.host.isEmpty ? "Rook" : frame.securityOrigin.host
+        alert.messageText = frame.securityOrigin.host.isEmpty ? "Rook Search" : frame.securityOrigin.host
         alert.informativeText = message
         alert.beginSheetModal(for: window) { _ in completionHandler() }
     }
@@ -332,7 +332,7 @@ final class BrowserTab: NSObject, WKNavigationDelegate, WKUIDelegate {
                  initiatedByFrame frame: WKFrameInfo, completionHandler: @escaping (Bool) -> Void) {
         guard let window = owner?.window else { completionHandler(false); return }
         let alert = NSAlert()
-        alert.messageText = frame.securityOrigin.host.isEmpty ? "Rook" : frame.securityOrigin.host
+        alert.messageText = frame.securityOrigin.host.isEmpty ? "Rook Search" : frame.securityOrigin.host
         alert.informativeText = message
         alert.addButton(withTitle: "OK")
         alert.addButton(withTitle: "Abbrechen")

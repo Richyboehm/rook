@@ -1,4 +1,4 @@
-/* Rook – new tab page. Dark glass look, no dependencies. */
+/* Rook Search – new tab page. Dark glass look, no dependencies. */
 
 :root {
   --glass: rgba(22, 22, 26, 0.46);
@@ -45,7 +45,7 @@ main {
   backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
 }
 
-/* Recently visited (only inside the Rook app) */
+/* Recently visited (only inside the Rook Search app) */
 #recent { margin-top: 26px; width: min(760px, 100%); }
 .recent-title { font-size: 12px; font-weight: 600; letter-spacing: 0.4px; text-transform: uppercase; color: var(--muted);
   margin: 0 0 8px 6px; text-shadow: 0 1px 8px rgba(0, 0, 0, 0.5); }
@@ -337,6 +337,10 @@ body.in-app .web-only { display: none !important; }
 @keyframes intro-up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 @keyframes sheet-in { from { opacity: 0; transform: translateY(10px) scale(.98); } to { opacity: 1; transform: none; } }
 
+/* "Rook Search" is longer than the old name: keep it on one line on phones, even while it is wide-spaced. */
+@media (max-width: 520px) {
+  .intro-name { font-size: 32px; white-space: nowrap; }
+}
 @media (prefers-reduced-motion: reduce) {
   #intro *, #intro *::before { animation-duration: .01s !important; animation-delay: 0s !important; }
 }
