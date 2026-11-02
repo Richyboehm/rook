@@ -1,4 +1,4 @@
-# Richy
+# Rook
 
 Eigene Mac-App, gebaut mit Swift und SwiftUI für macOS 26+. Eine Kommandozentrale schaltet jede
 Funktion einzeln ein und aus:
@@ -12,13 +12,18 @@ Funktion einzeln ein und aus:
 - **Downloads-Aufräumer**: sortiert neue Downloads nach Dateityp
 
 Ein Klick auf den Raben in der Menüleiste öffnet ein kleines Fenster mit allen Funktionen
-(per Ziehen umsortierbar) und einer Leistungsanzeige mit CPU und Arbeitsspeicher von Richy.
+(per Ziehen umsortierbar) und einer Leistungsanzeige mit CPU und Arbeitsspeicher von Rook.
+Von dort und aus der Kommandozentrale lässt sich auch der Browser
+[Rook Search](https://github.com/richyboehm/rook) laden und installieren.
+
+Rook hieß früher Richy. Die interne Kennung `de.richyboehm.richy` ist geblieben, damit
+Einstellungen und Erlaubnisse beim Umbenennen erhalten bleiben.
 
 Ausgeschaltete Funktionen laufen gar nicht. Alles andere reagiert auf Meldungen von macOS,
 statt regelmäßig nachzusehen. Gemessen mit laufender Musik: etwa 0,2 % CPU und 25 MB.
 
 ```bash
-cd Richy
+cd Rook
 ./build.sh install   # bauen, nach /Applications installieren und starten
 ./build.sh zip       # ZIP zum Weitergeben
 ```
@@ -36,5 +41,5 @@ cd Richy
   (SkyLight, login.framework). Nach großen macOS-Updates prüfen.
 - Das Wetter kommt von [Open-Meteo](https://open-meteo.com); gesendet wird nur der eingetragene Ort.
 - Protokoll für die Fehlersuche: in der Kommandozentrale unter Allgemein einschalten,
-  es liegt dann unter `~/Library/Logs/Richy.log`.
+  es liegt dann unter `~/Library/Logs/Rook.log`.
 - Die Vorgänger-Apps (LockGlass, NotchIsland, Fensterholer, Aufräumer) stecken in der Git-Historie.
