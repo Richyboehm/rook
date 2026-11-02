@@ -13,7 +13,7 @@ Funktion einzeln ein und aus:
 
 Ein Klick auf den Raben in der Menüleiste öffnet ein kleines Fenster mit allen Funktionen
 (per Ziehen umsortierbar) und einer Leistungsanzeige mit CPU und Arbeitsspeicher von Rook.
-Von dort und aus der Kommandozentrale lässt sich auch der Browser
+In der Kommandozentrale lässt sich auch der Browser
 [Rook Search](../README.md) laden und installieren.
 
 Rook hieß früher Richy. Die interne Kennung `de.richyboehm.richy` ist geblieben, damit

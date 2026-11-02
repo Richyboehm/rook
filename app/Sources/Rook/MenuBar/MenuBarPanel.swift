@@ -113,16 +113,6 @@ struct MenuBarView: View {
                 }
             }
             HStack(spacing: 8) {
-                FooterButton(title: "Rook Search", symbol: "magnifyingglass") {
-                    // Installiert: öffnen. Sonst die Kommandozentrale mit dem Knopf zum Laden zeigen.
-                    state.rookSearch.refresh()
-                    if state.rookSearch.installedURL != nil {
-                        close()
-                        state.rookSearch.open()
-                    } else {
-                        openSettings(nil)
-                    }
-                }
                 FooterButton(title: "Einstellungen", symbol: "gearshape") { openSettings(selected.feature) }
                 FooterButton(title: "Beenden", symbol: "power") { NSApp.terminate(nil) }
             }
