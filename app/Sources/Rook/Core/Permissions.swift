@@ -101,6 +101,12 @@ final class Permissions: NSObject, ObservableObject, CBCentralManagerDelegate {
         refreshSpotify(ask: false)
     }
 
+    /// Nur fragen, wenn die Erlaubnis noch fehlt; z. B. direkt nach dem Einschalten einer Funktion.
+    func requestIfNeeded(_ kind: Kind) {
+        refresh()
+        if status[kind] != .granted { request(kind) }
+    }
+
     func request(_ kind: Kind) {
         switch kind {
         case .accessibility:

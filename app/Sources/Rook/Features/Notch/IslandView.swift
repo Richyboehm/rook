@@ -1,3 +1,4 @@
+import EventKit
 import SwiftUI
 
 struct IslandView: View {
@@ -433,6 +434,12 @@ struct IslandView: View {
                 Text(event.start, format: .dateTime.hour().minute())
                     .foregroundStyle(.white.opacity(0.6))
                 Text(event.title).foregroundStyle(.white).lineLimit(1)
+            } else if EKEventStore.authorizationStatus(for: .event) != .fullAccess {
+                Image(systemName: "calendar").foregroundStyle(.white.opacity(0.4))
+                Button("Termine anzeigen") { AppState.shared.permissions.request(.calendar) }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(.white.opacity(0.7))
+                    .help("Rook fragt einmal nach dem Kalender")
             } else {
                 Image(systemName: "calendar").foregroundStyle(.white.opacity(0.4))
                 Text("Keine Termine in Sicht").foregroundStyle(.white.opacity(0.4))

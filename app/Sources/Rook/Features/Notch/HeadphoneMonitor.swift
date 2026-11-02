@@ -25,11 +25,8 @@ final class HeadphoneMonitor: NSObject, CBCentralManagerDelegate {
 
     override init() {
         super.init()
-        switch CBManager.authorization {
-        case .allowedAlways: register()
-        case .notDetermined: permissionManager = CBCentralManager(delegate: self, queue: .main) // fragt nach
-        default: break // abgelehnt: keine Kopfhörer-Anzeige
-        }
+        // Nur mit Erlaubnis; gefragt wird erst, wenn man die Anzeige bewusst einschaltet.
+        if CBManager.authorization == .allowedAlways { register() }
     }
 
     nonisolated func centralManagerDidUpdateState(_ central: CBCentralManager) {

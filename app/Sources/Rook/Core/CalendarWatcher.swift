@@ -29,9 +29,9 @@ final class CalendarWatcher: ObservableObject {
     func start() {
         guard !started else { return }
         started = true
-        store.requestFullAccessToEvents { granted, _ in
-            DispatchQueue.main.async { MainActor.assumeIsolated { if granted { self.reload() } } }
-        }
+        // Nie von selbst nach der Erlaubnis fragen; das passiert erst, wenn man Termine
+        // bewusst einschaltet oder in der Notch auf „Termine anzeigen“ klickt.
+        reload()
         let center = NotificationCenter.default
         for name in [Notification.Name.EKEventStoreChanged, .NSCalendarDayChanged] {
             center.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in

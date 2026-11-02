@@ -50,7 +50,8 @@ final class Settings: ObservableObject {
 
     // MARK: Fenster
 
-    @Published var windowFetcher: Bool = load("windowFetcher", true) { didSet { save("windowFetcher", windowFetcher) } }
+    /// Braucht die Erlaubnis „Bedienungshilfen“, deshalb erst nach bewusstem Einschalten.
+    @Published var windowFetcher: Bool = load("windowFetcher", false) { didSet { save("windowFetcher", windowFetcher) } }
     /// Dock wie unter Windows (verändert das Verhalten, deshalb erst nach bewusstem Einschalten).
     @Published var dockToggle: Bool = load("dockToggle", false) { didSet { save("dockToggle", dockToggle) } }
 

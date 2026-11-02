@@ -10,9 +10,11 @@ struct Track: Equatable {
 }
 
 /// Spotify-Status ohne Dauerabfrage: Spotify verschickt bei jedem Wechsel (Titel, Play,
-/// Pause, Spulen) selbst eine Meldung mit allen Angaben. AppleScript brauchen wir nur
-/// für den Stand beim Start, die Cover-Adresse und die Steuertasten. Diese Aufrufe laufen
-/// in einer eigenen Warteschlange, damit der Hauptthread nie wartet.
+/// Pause, Spulen) selbst eine Meldung mit allen Angaben; dafür braucht es keine Erlaubnis.
+/// Das Cover kommt von Spotifys öffentlicher Seite (oEmbed). Apple Events (Erlaubnis
+/// „Spotify steuern“) braucht es nur für die Steuertasten; gefragt wird erst beim ersten
+/// Klick darauf. Ist die Erlaubnis schon da, holt Rook damit auch den Stand beim Start und
+/// das größere Cover. Diese Aufrufe laufen in einer eigenen Warteschlange.
 @MainActor
 final class Spotify: ObservableObject {
     @Published private(set) var track: Track?
@@ -89,7 +91,9 @@ final class Spotify: ObservableObject {
         guard !querying else { return }
         querying = true
         Spotify.queue.async {
-            let output = Spotify.runStateScript()
+            // Nie von selbst nach der Erlaubnis fragen; ohne sie kommt der Stand mit Spotifys
+            // nächster Meldung.
+            let output = Spotify.automationAllowed ? Spotify.runStateScript() : nil
             DispatchQueue.main.async {
                 MainActor.assumeIsolated {
                     self.querying = false
@@ -181,7 +185,23 @@ final class Spotify: ObservableObject {
             // Die Adresse steht nicht in Spotifys Meldung, also einmal nachfragen.
             if artworkQueriedFor != track.id {
                 artworkQueriedFor = track.id
-                query()
+                let id = track.id
+                Spotify.queue.async {
+                    if Spotify.automationAllowed {
+                        DispatchQueue.main.async { MainActor.assumeIsolated { self.query() } }
+                    } else {
+                        Spotify.publicArtwork(for: id) { url in
+                            DispatchQueue.main.async {
+                                MainActor.assumeIsolated {
+                                    guard let url, var current = self.track, current.id == id else { return }
+                                    current.artworkURL = url
+                                    self.track = current
+                                    self.ensureArtwork()
+                                }
+                            }
+                        }
+                    }
+                }
             }
             return
         }
@@ -203,6 +223,26 @@ final class Spotify: ObservableObject {
     private func clear() {
         if isPlaying { isPlaying = false }
         if track != nil { track = nil }
+    }
+
+    /// Ist „Spotify steuern“ schon erlaubt? Fragt dabei nicht nach.
+    nonisolated static var automationAllowed: Bool {
+        let target = NSAppleEventDescriptor(bundleIdentifier: bundleID)
+        return AEDeterminePermissionToAutomateTarget(target.aeDesc, typeWildCard, typeWildCard, false) == noErr
+    }
+
+    /// Cover-Adresse über Spotifys öffentliche oEmbed-Schnittstelle, ganz ohne Erlaubnis.
+    /// `id` ist z. B. „spotify:track:…“; lokale Dateien haben kein Cover.
+    nonisolated static func publicArtwork(for id: String, completion: @escaping @Sendable (URL?) -> Void) {
+        let parts = id.split(separator: ":")
+        guard parts.count == 3, ["track", "episode"].contains(parts[1]),
+              let url = URL(string: "https://open.spotify.com/oembed?url=https://open.spotify.com/\(parts[1])/\(parts[2])") else {
+            return completion(nil)
+        }
+        URLSession.shared.dataTask(with: url) { data, _, _ in
+            let info = data.flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: Any] }
+            completion((info?["thumbnail_url"] as? String).flatMap(URL.init(string:)))
+        }.resume()
     }
 }
 

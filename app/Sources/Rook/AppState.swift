@@ -79,6 +79,30 @@ final class AppState {
         // Lautstärke pro App
         settings.$appVolume.sink { [weak self] on in self?.volume.enabled = on }.store(in: &cancellables)
 
+        // Wird eine Funktion eingeschaltet, die eine Erlaubnis braucht, gleich einmal fragen.
+        // Beim Start selbst wird nie gefragt (dropFirst), nur bei bewusstem Einschalten.
+        let asks: [(Published<Bool>.Publisher, Permissions.Kind)] = [
+            (settings.$windowFetcher, .accessibility), (settings.$dockToggle, .accessibility),
+            (settings.$mouseWheel, .accessibility), (settings.$appVolume, .audioCapture),
+            (settings.$widgetEvent, .calendar), (settings.$notchCalendar, .calendar),
+            (settings.$widgetBattery, .bluetooth), (settings.$notchHeadphones, .bluetooth),
+        ]
+        for (publisher, kind) in asks {
+            publisher.dropFirst().removeDuplicates().filter { $0 }
+                .sink { [weak self] _ in self?.permissions.requestIfNeeded(kind) }
+                .store(in: &cancellables)
+        }
+        // Kommt eine Erlaubnis dazu, die betroffenen Teile ohne Neustart nachladen.
+        permissions.$status
+            .map { ($0[.calendar] == .granted, $0[.bluetooth] == .granted) }
+            .removeDuplicates { $0 == $1 }
+            .dropFirst()
+            .sink { [weak self] calendar, bluetooth in
+                if calendar { self?.calendar.reload() }
+                if bluetooth { self?.notch.restartHeadphones() }
+            }
+            .store(in: &cancellables)
+
         // Downloads
         settings.$downloadsTrashInstallers.sink { [weak self] on in self?.downloads.trashOldInstallers = on }
             .store(in: &cancellables)

@@ -183,6 +183,13 @@ final class NotchFeature {
         updateHeadphones()
     }
 
+    /// Nach dem Erlauben von Bluetooth: Kopfhörer-Erkennung neu anmelden.
+    func restartHeadphones() {
+        headphones?.stop()
+        headphones = nil
+        updateHeadphones()
+    }
+
     private func updateHeadphones() {
         let wanted = enabled && settings.notchHeadphones
         if wanted && headphones == nil {
