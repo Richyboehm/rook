@@ -143,6 +143,8 @@ final class FakeTabs: TabBarDelegate {
     func moveTab(from: Int, to: Int) {}
     func menuForTab(at index: Int) -> NSMenu { NSMenu() }
     func newTab() {}
+    func dropTab(at index: Int, windowPoint: NSPoint) -> Bool { false }
+    func dragTab(over windowPoint: NSPoint) {}
 }
 let fakeTabs = FakeTabs()
 fakeTabs.tabs = [startTab, blankTab]

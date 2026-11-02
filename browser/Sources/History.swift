@@ -99,17 +99,24 @@ enum Session {
     /// Per window: its tabs in order, marked "pinned:" when pinned. Private windows are never saved.
     static func save() {
         var groups: [[String]] = []
+        var groupIDs: [String] = []
         let ordered = NSApp.orderedWindows.compactMap { $0.windowController as? BrowserWindowController }
         for controller in ordered where !controller.isPrivate {
             let tabs = controller.tabs.compactMap { tab in tab.sessionURL.map { (tab.isPinned ? "pinned:" : "") + $0 } }
-            if !tabs.isEmpty { groups.append(tabs) }
+            if !tabs.isEmpty {
+                groups.append(tabs)
+                groupIDs.append(controller.groupID ?? "")
+            }
         }
         UserDefaults.standard.set(groups, forKey: key)
+        UserDefaults.standard.set(groupIDs, forKey: "sessionGroupIDs")
+        TabGroups.saveOpenGroups()
     }
 
-    static func load() -> [(urls: [URL], pinned: [Bool])] {
+    static func load() -> [(urls: [URL], pinned: [Bool], groupID: String?)] {
         let groups = UserDefaults.standard.array(forKey: key) as? [[String]] ?? []
-        return groups.compactMap { group in
+        let groupIDs = UserDefaults.standard.stringArray(forKey: "sessionGroupIDs") ?? []
+        return groups.enumerated().compactMap { index, group in
             var urls: [URL] = [], pinned: [Bool] = []
             for entry in group {
                 let isPinned = entry.hasPrefix("pinned:")
@@ -117,7 +124,8 @@ enum Session {
                 urls.append(url)
                 pinned.append(isPinned)
             }
-            return urls.isEmpty ? nil : (urls, pinned)
+            let groupID = groupIDs.indices.contains(index) && !groupIDs[index].isEmpty ? groupIDs[index] : nil
+            return urls.isEmpty ? nil : (urls, pinned, TabGroups.group(groupID) == nil ? nil : groupID)
         }
     }
 }

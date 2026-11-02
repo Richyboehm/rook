@@ -14,13 +14,20 @@ enum Favorites {
 
     static var pending: [Item] {
         get { (UserDefaults.standard.data(forKey: pendingKey)).flatMap { try? JSONDecoder().decode([Item].self, from: $0) } ?? [] }
-        set { UserDefaults.standard.set(try? JSONEncoder().encode(newValue), forKey: pendingKey) }
+        set {
+            UserDefaults.standard.set(try? JSONEncoder().encode(newValue), forKey: pendingKey)
+            NotificationCenter.default.post(name: .rookFavoritesChanged, object: nil)
+        }
     }
 
     /// Favorites as last seen on the start page (used for address bar suggestions).
     static var known: [Item] {
         get { (UserDefaults.standard.data(forKey: knownKey)).flatMap { try? JSONDecoder().decode([Item].self, from: $0) } ?? [] }
-        set { UserDefaults.standard.set(try? JSONEncoder().encode(newValue), forKey: knownKey) }
+        set {
+            guard newValue != known else { return }
+            UserDefaults.standard.set(try? JSONEncoder().encode(newValue), forKey: knownKey)
+            NotificationCenter.default.post(name: .rookFavoritesChanged, object: nil)
+        }
     }
 
     static func add(name: String, url: URL) {

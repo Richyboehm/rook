@@ -27,6 +27,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         sessionTimer = Timer.scheduledTimer(withTimeInterval: 20, repeats: true) { _ in Session.save() }
         sessionTimer?.tolerance = 5
 
+        // An import that needed a restart for the permission continues now.
+        TabGroupDialogs.resumeAfterRestart()
+
+        // Already set up before tab groups existed: offer Safari's tab groups once now.
+        if Settings.welcomeShown {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in self?.offerSafariTabGroups() }
+        }
+
         // After the start page's first setup, offer once to become the default browser.
         NotificationCenter.default.addObserver(forName: .rookOnboardingDone, object: nil, queue: .main) { [weak self] _ in
             guard !Settings.welcomeShown else { return }
@@ -50,6 +58,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             case .alertSecondButtonReturn: DispatchQueue.main.async { self?.importBookmarks() }
             default: break
             }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { self?.offerSafariTabGroups() }
         }
     }
 
@@ -102,7 +111,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private func restoreSession() {
         guard Settings.restoreSession else { return }
         for group in Session.load().reversed() {
-            BrowserWindowController(urls: group.urls, pinned: group.pinned).showWindow(nil)
+            BrowserWindowController(urls: group.urls, pinned: group.pinned, groupID: group.groupID).showWindow(nil)
         }
     }
 
@@ -152,6 +161,36 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             : "Sie erscheinen beim nächsten neuen Tab auf deiner Startseite. Die Startseite zeigt höchstens 60 Favoriten, Ordner werden nicht übernommen."
         alert.runModal()
         newTab()
+    }
+
+    @objc func importSafariTabGroups() {
+        Settings.safariTabGroupsOffered = true
+        TabGroupDialogs.importFromSafari()
+    }
+
+    /// macOS hands saved passwords only to Safari, so Rook Search opens Apple's Passwords app instead
+    /// (on older systems its page in System Settings), where a password can be copied.
+    @objc func openPasswords() {
+        if let app = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.apple.Passwords") {
+            NSWorkspace.shared.openApplication(at: app, configuration: NSWorkspace.OpenConfiguration())
+        } else if let settings = URL(string: "x-apple.systempreferences:com.apple.Passwords-Settings.extension") {
+            NSWorkspace.shared.open(settings)
+        }
+    }
+
+    /// Once (also for people who already use Rook Search): if Safari has tab groups, offer to take them over.
+    private func offerSafariTabGroups() {
+        guard !Settings.safariTabGroupsOffered, SafariTabGroups.exist, let window = current?.window else { return }
+        Settings.safariTabGroupsOffered = true
+        let alert = NSAlert()
+        alert.messageText = "Tab-Gruppen aus Safari übernehmen?"
+        alert.informativeText = "Deine Tab-Gruppen aus Safari kannst du in Rook Search weiterverwenden. Dafür fragt macOS einmal nach Zugriff. Später geht das auch über den Knopf oben links."
+        alert.addButton(withTitle: "Übernehmen …")
+        alert.addButton(withTitle: "Nicht jetzt")
+        alert.beginSheetModal(for: window) { response in
+            guard response == .alertFirstButtonReturn else { return }
+            DispatchQueue.main.async { TabGroupDialogs.importFromSafari() }
+        }
     }
 
     // MARK: Protection menu (ad & tracker blocker)
@@ -286,6 +325,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         file.addItem(.separator())
         item(file, "Zu Favoriten hinzufügen", #selector(BrowserWindowController.addToFavorites), "d")
         item(file, "Lesezeichen importieren …", #selector(importBookmarks), "", target: self)
+        item(file, "Tab-Gruppen aus Safari übernehmen …", #selector(importSafariTabGroups), "", target: self)
         file.addItem(.separator())
         item(file, "Drucken …", #selector(BrowserWindowController.printPage), "p")
 
@@ -298,6 +338,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         edit.addItem(withTitle: "Kopieren", action: #selector(NSText.copy(_:)), keyEquivalent: "c")
         edit.addItem(withTitle: "Einsetzen", action: #selector(NSText.paste(_:)), keyEquivalent: "v")
         edit.addItem(withTitle: "Alles auswählen", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
+        edit.addItem(.separator())
+        let copyAddress = item(edit, "Adresse kopieren", #selector(BrowserWindowController.copyCurrentAddress), "c")
+        copyAddress.keyEquivalentModifierMask = [.command, .shift]
+        edit.addItem(.separator())
+        let passwords = item(edit, "Passwörter …", #selector(openPasswords), "p", target: self)
+        passwords.keyEquivalentModifierMask = [.command, .option]
         edit.addItem(.separator())
         item(edit, "Auf Seite suchen …", #selector(BrowserWindowController.showFindBar), "f")
         item(edit, "Weitersuchen", #selector(BrowserWindowController.findNext), "g")
@@ -312,6 +358,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         item(view, "Vergrößern", #selector(BrowserWindowController.zoomIn), "+")
         item(view, "Verkleinern", #selector(BrowserWindowController.zoomOut), "-")
         item(view, "Originalgröße", #selector(BrowserWindowController.actualSize), "0")
+        view.addItem(.separator())
+        let sidebar = item(view, "Seitenleiste mit Tab-Gruppen", #selector(BrowserWindowController.toggleSidebar), "l")
+        sidebar.keyEquivalentModifierMask = [.command, .shift]
+        let favorites = item(view, "Favoritenleiste", #selector(BrowserWindowController.toggleFavoritesBar), "b")
+        favorites.keyEquivalentModifierMask = [.command, .shift]
+        let reader = item(view, "Leseansicht", #selector(BrowserWindowController.toggleReader), "r")
+        reader.keyEquivalentModifierMask = [.command, .shift]
         view.addItem(.separator())
         let downloads = item(view, "Downloads", #selector(BrowserWindowController.showDownloads), "l")
         downloads.keyEquivalentModifierMask = [.command, .option]

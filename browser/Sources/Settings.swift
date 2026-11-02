@@ -30,6 +30,24 @@ enum Settings {
         set { defaults.set(newValue, forKey: "welcomeShown") }
     }
 
+    /// The sidebar with the tab groups is shown (folded away by default, like in Safari).
+    static var sidebarVisible: Bool {
+        get { defaults.object(forKey: "sidebarVisible") as? Bool ?? false }
+        set { defaults.set(newValue, forKey: "sidebarVisible") }
+    }
+
+    /// The favorites bar under the toolbar is shown (⇧⌘B).
+    static var favoritesBarVisible: Bool {
+        get { defaults.object(forKey: "favoritesBarVisible") as? Bool ?? true }
+        set { defaults.set(newValue, forKey: "favoritesBarVisible") }
+    }
+
+    /// Asked once whether to take over Safari's tab groups.
+    static var safariTabGroupsOffered: Bool {
+        get { defaults.bool(forKey: "safariTabGroupsOffered") }
+        set { defaults.set(newValue, forKey: "safariTabGroupsOffered") }
+    }
+
     // MARK: Per website
 
     enum Permission: String { case camera, microphone }

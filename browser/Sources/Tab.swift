@@ -20,11 +20,23 @@ final class BrowserTab: NSObject, WKNavigationDelegate, WKUIDelegate {
     /// The address that failed to load while an error page is shown (for the address bar and ⌘R).
     private(set) var failedURL: URL?
     private var observations: [NSKeyValueObservation] = []
+    /// Address not loaded yet: tabs of a group or of a restored session load when they are first shown.
+    private(set) var pendingURL: URL?
+    /// Title to show until a pending tab has loaded.
+    var pendingTitle: String?
+    /// The page plays sound right now (shown as a speaker on the tab).
+    private(set) var isPlayingAudio = false
+    /// The tab's sound was switched off with a click on the speaker.
+    private(set) var isMuted = false
+    /// The page has an article that the reader view can show (checked after each page load).
+    private(set) var readerAvailable = false
+    private static let audioKey = "_isPlayingAudio"
+    private var observesAudio = false
 
-    init(configuration: WKWebViewConfiguration? = nil, url: URL? = Rook.startURL, isPrivate: Bool) {
+    init(configuration: WKWebViewConfiguration? = nil, url: URL? = Rook.startURL, isPrivate: Bool, deferred: Bool = false) {
         self.isPrivate = isPrivate
         let config = configuration ?? (isPrivate ? Rook.privateConfiguration : Rook.configuration)
-        webView = WKWebView(frame: .zero, configuration: config)
+        webView = RookWebView(frame: .zero, configuration: config)
         super.init()
         if url?.scheme == "rook" { paintsWhite(false) }
         webView.navigationDelegate = self
@@ -49,11 +61,29 @@ final class BrowserTab: NSObject, WKNavigationDelegate, WKUIDelegate {
             webView.observe(\.cameraCaptureState) { web, _ in notify(web) },
             webView.observe(\.microphoneCaptureState) { web, _ in notify(web) }
         ]
-        if let url { load(url) }
+        // WebKit reports playing sound only through this private property (Safari uses it too).
+        // It is a plain notification, so it costs nothing while nothing plays.
+        if webView.responds(to: NSSelectorFromString(Self.audioKey)) {
+            webView.addObserver(self, forKeyPath: Self.audioKey, options: [.new], context: nil)
+            observesAudio = true
+        }
+        if let url {
+            if deferred { pendingURL = url } else { load(url) }
+        }
+    }
+
+    /// Loads a pending address (when the tab is shown for the first time).
+    func loadIfNeeded() {
+        guard let pendingURL else { return }
+        load(pendingURL)
     }
 
     func close() {
         observations.removeAll()
+        if observesAudio {
+            webView.removeObserver(self, forKeyPath: Self.audioKey)
+            observesAudio = false
+        }
         webView.stopLoading()
         webView.navigationDelegate = nil
         webView.uiDelegate = nil
@@ -61,13 +91,40 @@ final class BrowserTab: NSObject, WKNavigationDelegate, WKUIDelegate {
 
     // MARK: State
 
-    var isStartPage: Bool { webView.url?.scheme == "rook" || (webView.url == nil && failedURL == nil) }
+    var isStartPage: Bool {
+        if let pendingURL { return pendingURL.scheme == "rook" }
+        return webView.url?.scheme == "rook" || (webView.url == nil && failedURL == nil)
+    }
 
     var title: String {
+        if let pendingURL {
+            if pendingURL.scheme == "rook" { return "Neuer Tab" }
+            return pendingTitle.flatMap { $0.isEmpty ? nil : $0 } ?? pendingURL.host ?? pendingURL.absoluteString
+        }
         let t = webView.title ?? ""
         if !t.isEmpty { return t }
         if isStartPage { return "Neuer Tab" }
         return webView.url?.host ?? failedURL?.host ?? "Lädt …"
+    }
+
+    override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey: Any]?,
+                               context: UnsafeMutableRawPointer?) {
+        guard keyPath == Self.audioKey else {
+            super.observeValue(forKeyPath: keyPath, of: object, change: change, context: context)
+            return
+        }
+        let playing = (webView.value(forKey: Self.audioKey) as? Bool) ?? false
+        guard playing != isPlayingAudio else { return }
+        isPlayingAudio = playing
+        owner?.tabChanged(self)
+    }
+
+    /// Switches the tab's sound off or on again (the page keeps playing, only silent).
+    func toggleMute() {
+        guard webView.responds(to: NSSelectorFromString("_setPageMuted:")) else { return }
+        isMuted.toggle()
+        webView.setValue(isMuted ? 1 : 0, forKey: "pageMuted")
+        owner?.tabChanged(self)
     }
 
     var isUsingCameraOrMicrophone: Bool {
@@ -76,6 +133,7 @@ final class BrowserTab: NSObject, WKNavigationDelegate, WKUIDelegate {
 
     /// The address shown in the address bar (the failed one on error pages).
     var displayURL: URL? {
+        if let pendingURL { return pendingURL.scheme == "rook" ? nil : pendingURL }
         if let failedURL, webView.url?.absoluteString == "about:blank" { return failedURL }
         return isStartPage ? nil : webView.url
     }
@@ -93,6 +151,7 @@ final class BrowserTab: NSObject, WKNavigationDelegate, WKUIDelegate {
     // MARK: Actions
 
     func load(_ url: URL) {
+        pendingURL = nil
         failedURL = nil
         if url.scheme == "rook" { paintsWhite(false) }
         webView.load(URLRequest(url: url))
@@ -108,7 +167,8 @@ final class BrowserTab: NSObject, WKNavigationDelegate, WKUIDelegate {
     }
 
     func reload() {
-        if webView.isLoading { webView.stopLoading() }
+        if pendingURL != nil { loadIfNeeded() }
+        else if webView.isLoading { webView.stopLoading() }
         else if let failedURL { load(failedURL) }      // on an error page: try the real address again
         else { webView.reload() }
     }
@@ -234,12 +294,20 @@ final class BrowserTab: NSObject, WKNavigationDelegate, WKUIDelegate {
         // Remembered zoom level of this website.
         webView.pageZoom = (isPrivate ? nil : Settings.site(webView.url).flatMap(Settings.zoom(for:))) ?? 1
         favicon = nil
+        readerAvailable = false
         owner?.tabChanged(self)
     }
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         if !isPrivate, let url = webView.url { History.shared.add(url: url, title: webView.title ?? "") }
         loadFavicon()
+        if ["http", "https"].contains(webView.url?.scheme ?? "") {
+            Reader.checkAvailable(in: webView) { [weak self] available in
+                guard let self, available != self.readerAvailable else { return }
+                self.readerAvailable = available
+                self.owner?.tabChanged(self)
+            }
+        }
         if webView.url?.scheme == "rook" {
             // Take over the search engine chosen in Rook's start page settings for the address bar.
             webView.evaluateJavaScript("(JSON.parse(localStorage.getItem('rook.v1') || '{}').engine) || ''") { result, _ in
@@ -398,5 +466,25 @@ final class BrowserTab: NSObject, WKNavigationDelegate, WKUIDelegate {
             }
             decisionHandler(allow ? .grant : .deny)
         }
+    }
+}
+
+/// Web view with Rook's additions to the right-click menu: links open in a new tab (Rook works with tabs,
+/// not windows), and on the page itself there is "copy address" and "add to tab group".
+final class RookWebView: WKWebView {
+    /// Extra entries for the page menu (not over a link, image or selected text).
+    var pageMenuItems: (() -> [NSMenuItem])?
+
+    override func willOpenMenu(_ menu: NSMenu, with event: NSEvent) {
+        super.willOpenMenu(menu, with: event)
+        let ids = menu.items.compactMap { $0.identifier?.rawValue }
+        for item in menu.items where item.identifier?.rawValue == "WKMenuItemIdentifierOpenLinkInNewWindow" {
+            item.title = "Link in neuem Tab öffnen"
+        }
+        // Only on the bare page: no link, image or text selection under the pointer.
+        let special = ids.contains { $0.contains("Link") || $0.contains("Image") || $0.contains("Copy") || $0.contains("Media") }
+        guard !special, let extra = pageMenuItems?(), !extra.isEmpty else { return }
+        if !menu.items.isEmpty { menu.addItem(.separator()) }
+        extra.forEach(menu.addItem)
     }
 }
