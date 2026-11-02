@@ -64,6 +64,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
     func windowWillClose(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
+        // Fenster samt Inhalt freigeben; beim nächsten Öffnen wird es neu gebaut.
+        DispatchQueue.main.async {
+            self.window = nil
+            Memory.relieve()
+        }
     }
 
     // MARK: Menüleiste

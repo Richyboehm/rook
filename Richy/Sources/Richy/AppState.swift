@@ -16,6 +16,8 @@ final class AppState {
     let permissions = Permissions()
     let windowFetcher = WindowFetcher()
     let mouseWheel = MouseWheel()
+    let volume = AppVolume()
+    let resources = ResourceMonitor()
     let downloads = DownloadsCleaner()
     let weather = WeatherService()
 
@@ -67,6 +69,9 @@ final class AppState {
         settings.$mouseWheel.sink { [weak self] on in
             if on { self?.mouseWheel.start() } else { self?.mouseWheel.stop() }
         }.store(in: &cancellables)
+
+        // Lautstärke pro App
+        settings.$appVolume.sink { [weak self] on in self?.volume.enabled = on }.store(in: &cancellables)
 
         // Downloads
         settings.$downloadsTrashInstallers.sink { [weak self] on in self?.downloads.trashOldInstallers = on }

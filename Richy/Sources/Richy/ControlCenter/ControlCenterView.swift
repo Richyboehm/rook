@@ -55,6 +55,7 @@ struct ControlCenterView: View {
         case .feature(.notch): notchPage
         case .feature(.windowFetcher): windowFetcherPage
         case .feature(.mouseWheel): mouseWheelPage
+        case .feature(.appVolume): appVolumePage
         case .feature(.downloads): downloadsPage
         case .permissions: permissionsPage
         case .general: generalPage
@@ -312,6 +313,20 @@ struct ControlCenterView: View {
             }
             .disabled(!settings.mouseWheel)
             Card(title: "Erlaubnisse") { PermissionRow(kind: .accessibility, permissions: permissions) }
+        }
+    }
+
+    // MARK: Lautstärke
+
+    private var appVolumePage: some View {
+        let feature = Feature.appVolume
+        return VStack(alignment: .leading, spacing: 20) {
+            PageHeader(symbol: feature.symbol, title: feature.title,
+                       text: "Stell für jede App eine eigene Lautstärke ein, wie unter Windows. Steht eine App auf 100 %, bleibt ihr Ton unverändert. Die Lautstärke wird pro App gemerkt und beim nächsten Abspielen wieder benutzt.",
+                       isOn: feature.isOn(settings))
+            Card(title: "Apps") { AppVolumeList(volume: state.volume) }
+                .disabled(!settings.appVolume)
+            Card(title: "Erlaubnisse") { PermissionRow(kind: .audioCapture, permissions: permissions) }
         }
     }
 

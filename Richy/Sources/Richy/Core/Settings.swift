@@ -61,6 +61,10 @@ final class Settings: ObservableObject {
         didSet { save("mouseReverseHorizontal", mouseReverseHorizontal) }
     }
 
+    // MARK: Lautstärke pro App (verändert den Ton, deshalb erst nach bewusstem Einschalten)
+
+    @Published var appVolume: Bool = load("appVolume", false) { didSet { save("appVolume", appVolume) } }
+
     // MARK: Downloads (verschiebt Dateien, deshalb erst nach bewusstem Einschalten)
 
     @Published var downloadsCleaner: Bool = load("downloadsCleaner", false) { didSet { save("downloadsCleaner", downloadsCleaner) } }

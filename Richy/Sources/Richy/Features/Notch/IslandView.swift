@@ -10,6 +10,8 @@ struct IslandView: View {
 
     /// Bereits angewendete Schritte während eines Zieh-Vorgangs am Timer.
     @State private var dragSteps = 0
+    /// Stelle im Song (0…1), solange man in der Zeitleiste klickt oder zieht.
+    @State private var scrub: Double?
 
     enum Mode: Equatable { case hidden, compact(Live), small(Peek), expanded }
 
@@ -115,9 +117,7 @@ struct IslandView: View {
             sides {
                 cover(size: model.notch.height - 10, radius: 6)
             } right: {
-                Image(systemName: "waveform")
-                    .font(.system(size: 13, weight: .bold))
-                    .foregroundStyle(accent)
+                Equalizer(color: accent)
             }
         case .meeting:
             sides {
@@ -543,19 +543,34 @@ struct IslandView: View {
         return min(max(value, 0), spotify.track?.duration ?? 0)
     }
 
+    /// Zeitleiste: Klicken springt an die Stelle, Ziehen spult mit Vorschau, losgelassen wird gesprungen.
     private func progressContent(elapsed: Double) -> some View {
         let duration = spotify.track?.duration ?? 0
+        let shown = scrub.map { $0 * duration } ?? elapsed
         return HStack(spacing: 10) {
-            Text(format(elapsed))
+            Text(format(shown))
             GeometryReader { geo in
-                Capsule().fill(.white.opacity(0.15))
-                    .overlay(alignment: .leading) {
-                        Capsule().fill(accent)
-                            .frame(width: geo.size.width * elapsed / max(duration, 1))
+                let width = geo.size.width * shown / max(duration, 1)
+                ZStack(alignment: .leading) {
+                    Capsule().fill(.white.opacity(0.15))
+                    Capsule().fill(accent).frame(width: width)
+                    if scrub != nil {
+                        Circle().fill(.white).frame(width: 10, height: 10).offset(x: width - 5)
                     }
+                }
+                .frame(height: scrub == nil ? 4 : 6)
+                .frame(maxHeight: .infinity)
+                .contentShape(Rectangle())
+                .gesture(DragGesture(minimumDistance: 0)
+                    .onChanged { value in scrub = min(max(value.location.x / geo.size.width, 0), 1) }
+                    .onEnded { value in
+                        spotify.seek(to: min(max(value.location.x / geo.size.width, 0), 1) * duration)
+                        scrub = nil
+                    })
+                .animation(.easeOut(duration: 0.15), value: scrub == nil)
             }
-            .frame(height: 4)
-            Text("-" + format(duration - elapsed))
+            .frame(height: 14)
+            Text("-" + format(duration - shown))
         }
         .font(.system(size: 10, weight: .medium).monospacedDigit())
         .foregroundStyle(.white.opacity(0.55))
@@ -583,4 +598,67 @@ extension Notification.Name {
     static let openControlCenter = Notification.Name("Richy.openControlCenter")
     /// `object` ist der rawValue einer `Feature`, deren Seite die Kommandozentrale zeigen soll.
     static let showControlCenterPage = Notification.Name("Richy.showControlCenterPage")
+}
+
+/// Kleine Balken rechts neben der Notch, die sich wie ein Equalizer bewegen, solange Musik
+/// läuft. Kein echtes Signal, sondern ruhige Wellen. Die Bewegung läuft als Core-Animation
+/// im System (WindowServer); Richy selbst rechnet dabei nichts, nur die Farbe wird gesetzt.
+private struct Equalizer: NSViewRepresentable {
+    let color: Color
+
+    func makeNSView(context: Context) -> EqualizerView { EqualizerView() }
+
+    func updateNSView(_ view: EqualizerView, context: Context) {
+        view.setColor(NSColor(color).cgColor)
+    }
+
+    func sizeThatFits(_ proposal: ProposedViewSize, nsView: EqualizerView, context: Context) -> CGSize? {
+        CGSize(width: EqualizerView.width, height: EqualizerView.height)
+    }
+}
+
+final class EqualizerView: NSView {
+    static let width: CGFloat = 4 * 3 + 3 * 2.5
+    static let height: CGFloat = 14
+    private var bars: [CALayer] = []
+    /// Je Balken eigene Höhen und Dauer, damit es nicht im Gleichtakt wippt.
+    private static let patterns: [(heights: [CGFloat], duration: CFTimeInterval)] = [
+        ([0.45, 0.95, 0.6, 0.85, 0.4, 0.7, 0.45], 1.9),
+        ([0.8, 0.5, 1.0, 0.55, 0.9, 0.6, 0.8], 2.3),
+        ([0.55, 0.85, 0.4, 0.95, 0.6, 0.75, 0.55], 1.7),
+        ([0.7, 0.4, 0.8, 0.5, 1.0, 0.45, 0.7], 2.1),
+    ]
+
+    override init(frame: NSRect) {
+        super.init(frame: NSRect(x: 0, y: 0, width: Self.width, height: Self.height))
+        wantsLayer = true
+        for (index, pattern) in Self.patterns.enumerated() {
+            let bar = CALayer()
+            bar.frame = CGRect(x: CGFloat(index) * 5.5, y: 0, width: 3, height: Self.height)
+            bar.cornerRadius = 1.5
+            bar.backgroundColor = NSColor.white.cgColor
+            let animation = CAKeyframeAnimation(keyPath: "transform.scale.y")
+            animation.values = pattern.heights
+            animation.duration = pattern.duration
+            animation.calculationMode = .cubic
+            animation.repeatCount = .infinity
+            animation.isRemovedOnCompletion = false
+            bar.transform = CATransform3DMakeScale(1, pattern.heights[0], 1)
+            bar.add(animation, forKey: "wave")
+            layer?.addSublayer(bar)
+            bars.append(bar)
+        }
+    }
+
+    required init?(coder: NSCoder) { fatalError() }
+
+    override var isFlipped: Bool { true }
+    override var intrinsicContentSize: NSSize { NSSize(width: Self.width, height: Self.height) }
+
+    func setColor(_ color: CGColor) {
+        CATransaction.begin()
+        CATransaction.setAnimationDuration(0.9)
+        bars.forEach { $0.backgroundColor = color }
+        CATransaction.commit()
+    }
 }

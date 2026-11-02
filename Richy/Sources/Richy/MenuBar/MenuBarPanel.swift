@@ -1,5 +1,6 @@
 import AppKit
 import SwiftUI
+import UniformTypeIdentifiers
 
 /// Das Fenster unter dem Raben in der Menüleiste, als normales macOS-Popover mit kleinem Pfeil.
 /// Schließt sich bei Klick daneben, mit Esc oder bei erneutem Klick auf den Raben.
@@ -8,17 +9,13 @@ final class MenuBarPanel: NSObject, NSPopoverDelegate {
     var onClose: (() -> Void)?
     private let popover = NSPopover()
     private let intro = IntroTrigger()
+    private let state: AppState
+    private let openSettings: (Feature?) -> Void
 
     init(state: AppState, openSettings: @escaping (Feature?) -> Void) {
+        self.state = state
+        self.openSettings = openSettings
         super.init()
-        let view = MenuBarView(settings: state.settings, permissions: state.permissions, downloads: state.downloads,
-                               intro: intro, state: state,
-                               openSettings: { [weak self] feature in self?.close(); openSettings(feature) },
-                               close: { [weak self] in self?.close() })
-        let controller = NSHostingController(rootView: view)
-        // Das Popover wächst und schrumpft mit dem Inhalt, z. B. beim Wechsel der Funktion.
-        controller.sizingOptions = .preferredContentSize
-        popover.contentViewController = controller
         // Immer dunkel wie bei Vorssaint, egal ob die Menüleiste hell oder dunkel ist.
         popover.appearance = NSAppearance(named: .darkAqua)
         popover.behavior = .transient
@@ -34,6 +31,8 @@ final class MenuBarPanel: NSObject, NSPopoverDelegate {
 
     func show(below button: NSStatusBarButton) {
         intro.count += 1
+        // Der Inhalt wird erst beim Öffnen gebaut und beim Schließen wieder freigegeben.
+        if popover.contentViewController == nil { popover.contentViewController = makeContent() }
         popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
         // Als Hintergrund-App bekommt das Popover sonst keine Tastatur (Esc).
         popover.contentViewController?.view.window?.makeKey()
@@ -43,7 +42,22 @@ final class MenuBarPanel: NSObject, NSPopoverDelegate {
 
     func popoverWillClose(_ notification: Notification) { closedAt = Date() }
 
-    func popoverDidClose(_ notification: Notification) { onClose?() }
+    func popoverDidClose(_ notification: Notification) {
+        popover.contentViewController = nil
+        Memory.relieve()
+        onClose?()
+    }
+
+    private func makeContent() -> NSViewController {
+        let view = MenuBarView(settings: state.settings, permissions: state.permissions, downloads: state.downloads,
+                               intro: intro, state: state,
+                               openSettings: { [weak self] feature in self?.close(); self?.openSettings(feature) },
+                               close: { [weak self] in self?.close() })
+        let controller = NSHostingController(rootView: view)
+        // Das Popover wächst und schrumpft mit dem Inhalt, z. B. beim Wechsel der Funktion.
+        controller.sizingOptions = .preferredContentSize
+        return controller
+    }
 }
 
 /// Zählt jedes Öffnen mit, damit der Rabe oben seine kurze Animation jedes Mal abspielt.
@@ -68,15 +82,20 @@ struct MenuBarView: View {
     let close: () -> Void
 
     @AppStorage("menuBarTab") private var selectedRaw = Feature.lockWidget.rawValue
+    /// Reihenfolge der Leiste, per Ziehen änderbar; neue Tabs kommen hinten dazu.
+    @AppStorage("menuBarOrder") private var orderRaw = ""
+    @State private var dragging: MenuTab?
     /// Die Vorschau der Widgets meldet keine Änderungen; nach dem Umschalten neu zeichnen.
     @State private var widgetPreview = false
     @State private var notchExtras = false
 
-    private var features: [Feature] {
-        Feature.allCases.filter { $0 != .notch || NotchFeature.isAvailable }
+    private var tabs: [MenuTab] {
+        let available = Feature.allCases.filter { $0 != .notch || NotchFeature.isAvailable }.map(MenuTab.feature) + [.performance]
+        let stored = orderRaw.split(separator: ",").compactMap { MenuTab(id: String($0)) }.filter(available.contains)
+        return stored + available.filter { !stored.contains($0) }
     }
-    private var selected: Feature {
-        Feature(rawValue: selectedRaw).flatMap { features.contains($0) ? $0 : nil } ?? .lockWidget
+    private var selected: MenuTab {
+        MenuTab(id: selectedRaw).flatMap { tabs.contains($0) ? $0 : nil } ?? tabs[0]
     }
 
     var body: some View {
@@ -88,10 +107,13 @@ struct MenuBarView: View {
                     .font(.system(size: 10, weight: .semibold))
                     .foregroundStyle(.secondary)
                     .padding(.leading, 2)
-                card(for: selected)
+                switch selected {
+                case .feature(let feature): card(for: feature)
+                case .performance: PerformanceCard(monitor: state.resources, settings: settings)
+                }
             }
             HStack(spacing: 8) {
-                FooterButton(title: "Einstellungen", symbol: "gearshape") { openSettings(selected) }
+                FooterButton(title: "Einstellungen", symbol: "gearshape") { openSettings(selected.feature) }
                 FooterButton(title: "Beenden", symbol: "power") { NSApp.terminate(nil) }
             }
             .padding(.top, 4)
@@ -108,12 +130,13 @@ struct MenuBarView: View {
         }
     }
 
+    /// Klick wählt einen Tab, Ziehen sortiert die Leiste um.
     private var tabBar: some View {
         HStack(spacing: 2) {
-            ForEach(features) { feature in
-                let isSelected = feature == selected
-                Button { selectedRaw = feature.rawValue } label: {
-                    Image(systemName: feature.symbol)
+            ForEach(tabs) { tab in
+                let isSelected = tab == selected
+                Button { selectedRaw = tab.id } label: {
+                    Image(systemName: tab.symbol)
                         .font(.system(size: 13.5, weight: .semibold))
                         .foregroundStyle(isSelected ? AnyShapeStyle(MenuBarView.accent) : AnyShapeStyle(.secondary))
                         .frame(maxWidth: .infinity, minHeight: 27)
@@ -122,8 +145,15 @@ struct MenuBarView: View {
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .help(feature.title)
-                .accessibilityLabel(feature.title)
+                .help(tab.title)
+                .accessibilityLabel(tab.title)
+                .onDrag {
+                    dragging = tab
+                    return NSItemProvider(object: tab.id as NSString)
+                }
+                .onDrop(of: [.text], delegate: TabDrop(target: tab, tabs: tabs, dragging: $dragging) { order in
+                    orderRaw = order.map(\.id).joined(separator: ",")
+                })
             }
         }
         .padding(4)
@@ -222,6 +252,9 @@ struct MenuBarView: View {
             OptionRow(title: "Scrollen umkehren", isOn: $settings.mouseReverseScroll)
             OptionRow(title: "Zoomen umkehren", caption: "Mit gedrückter Cmd- oder ctrl-Taste", isOn: $settings.mouseReverseZoom)
             OptionRow(title: "Seitlich auch umkehren", isOn: $settings.mouseReverseHorizontal)
+        case .appVolume:
+            Divider()
+            AppVolumeList(volume: state.volume, compact: true)
         case .downloads:
             Divider()
             OptionRow(title: "Alte Installer wegräumen", caption: "Älter als 14 Tage, in den Papierkorb",
@@ -239,6 +272,173 @@ struct MenuBarView: View {
                 close()
                 NSWorkspace.shared.open(DownloadsCleaner.downloads)
             }
+        }
+    }
+}
+
+// MARK: Tabs
+
+/// Ein Tab in der Leiste: eine Funktion oder die Leistungsanzeige.
+enum MenuTab: Hashable, Identifiable {
+    case feature(Feature)
+    case performance
+
+    init?(id: String) {
+        if id == "performance" { self = .performance } else if let feature = Feature(rawValue: id) { self = .feature(feature) } else { return nil }
+    }
+
+    var id: String {
+        switch self {
+        case .feature(let feature): feature.rawValue
+        case .performance: "performance"
+        }
+    }
+
+    var title: String {
+        switch self {
+        case .feature(let feature): feature.title
+        case .performance: "Leistung"
+        }
+    }
+
+    var symbol: String {
+        switch self {
+        case .feature(let feature): feature.symbol
+        case .performance: "gauge.with.dots.needle.33percent"
+        }
+    }
+
+    var feature: Feature? {
+        if case .feature(let feature) = self { feature } else { nil }
+    }
+}
+
+/// Schiebt den gezogenen Tab an die Stelle, über der er gerade ist.
+private struct TabDrop: DropDelegate {
+    let target: MenuTab
+    let tabs: [MenuTab]
+    @Binding var dragging: MenuTab?
+    let save: ([MenuTab]) -> Void
+
+    func dropEntered(info: DropInfo) {
+        guard let dragging, dragging != target,
+              let from = tabs.firstIndex(of: dragging), let to = tabs.firstIndex(of: target) else { return }
+        var order = tabs
+        order.move(fromOffsets: IndexSet(integer: from), toOffset: to > from ? to + 1 : to)
+        withAnimation(.snappy(duration: 0.2)) { save(order) }
+    }
+
+    func dropUpdated(info: DropInfo) -> DropProposal? { DropProposal(operation: .move) }
+
+    func performDrop(info: DropInfo) -> Bool {
+        dragging = nil
+        return true
+    }
+}
+
+// MARK: Leistung
+
+/// CPU und Arbeitsspeicher von Richy: jetzt, als Verlauf der letzten Minute und höchstens.
+private struct PerformanceCard: View {
+    @ObservedObject var monitor: ResourceMonitor
+    @ObservedObject var settings: Settings
+
+    var body: some View {
+        let maximum = ResourceMonitor.estimatedMaximum(settings)
+        VStack(alignment: .leading, spacing: 10) {
+            Text("So viel braucht die App gerade.").font(.system(size: 11)).foregroundStyle(.secondary)
+            Divider()
+            metric("Prozessor", value: percent(monitor.samples.last?.cpu), values: monitor.samples.map(\.cpu), floor: 5)
+            metric("Arbeitsspeicher", value: megabytes(monitor.samples.last?.memory),
+                   values: monitor.samples.map(\.memory), floor: 50)
+            Divider()
+            InfoRow(title: "Höchstens", caption: "Geschätzt: alle eingeschalteten Funktionen gleichzeitig aktiv",
+                    value: "\(percent(maximum.cpu)) · \(megabytes(maximum.memory))")
+            InfoRow(title: "Speicher-Spitze", caption: "Seit dem Start der App",
+                    value: megabytes(monitor.peakMemory))
+            Text("100 % CPU entspricht einem voll ausgelasteten Prozessorkern, wie in der Aktivitätsanzeige.")
+                .font(.system(size: 10))
+                .foregroundStyle(.tertiary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .surface(cornerRadius: 10)
+        // Gemessen wird nur, solange dieser Tab offen ist.
+        .onAppear { monitor.start() }
+        .onDisappear { monitor.stop() }
+    }
+
+    private func metric(_ title: String, value: String, values: [Double], floor: Double) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Text(title).font(.system(size: 12))
+                Spacer()
+                Text(value).font(.system(size: 12, weight: .medium)).monospacedDigit()
+            }
+            Sparkline(values: values, floor: floor).frame(height: 30)
+        }
+    }
+
+    private func percent(_ value: Double?) -> String {
+        guard let value else { return "–" }
+        return value.formatted(.number.precision(.fractionLength(value < 10 ? 1 : 0))) + " %"
+    }
+
+    private func megabytes(_ value: Double?) -> String {
+        guard let value else { return "–" }
+        return value.formatted(.number.precision(.fractionLength(0))) + " MB"
+    }
+}
+
+/// Verlauf der letzten 60 Sekunden als blaue Linie mit sanfter Fläche darunter.
+private struct Sparkline: View {
+    let values: [Double]
+    /// Kleinster Endwert der Skala, damit kleine Schwankungen nicht riesig wirken.
+    let floor: Double
+
+    var body: some View {
+        GeometryReader { box in
+            let top = max(values.max() ?? 0, floor) * 1.15
+            let step = box.size.width / 59
+            let points = values.suffix(60).enumerated().map { index, value in
+                CGPoint(x: box.size.width - CGFloat(values.suffix(60).count - 1 - index) * step,
+                        y: box.size.height * (1 - CGFloat(value / top)))
+            }
+            ZStack {
+                RoundedRectangle(cornerRadius: 6, style: .continuous).fill(.primary.opacity(0.04))
+                if points.count > 1 {
+                    Path { path in
+                        path.move(to: CGPoint(x: points[0].x, y: box.size.height))
+                        points.forEach { path.addLine(to: $0) }
+                        path.addLine(to: CGPoint(x: points[points.count - 1].x, y: box.size.height))
+                    }
+                    .fill(LinearGradient(colors: [MenuBarView.accent.opacity(0.35), MenuBarView.accent.opacity(0)],
+                                         startPoint: .top, endPoint: .bottom))
+                    Path { path in path.addLines(points) }
+                        .stroke(MenuBarView.accent, style: StrokeStyle(lineWidth: 1.5, lineJoin: .round))
+                }
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+        }
+        .accessibilityHidden(true)
+    }
+}
+
+/// Zeile mit Titel, kleiner Erklärung und Wert rechts.
+private struct InfoRow: View {
+    let title: String
+    let caption: String
+    let value: String
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 10) {
+            VStack(alignment: .leading, spacing: 1) {
+                Text(title).font(.system(size: 12))
+                Text(caption).font(.system(size: 10)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer(minLength: 0)
+            Text(value).font(.system(size: 12, weight: .medium)).monospacedDigit()
         }
     }
 }

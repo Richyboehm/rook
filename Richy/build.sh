@@ -34,15 +34,24 @@ cat > "$APP/Contents/Info.plist" <<'PLIST'
     <key>NSAppleEventsUsageDescription</key><string>Richy zeigt den Song, der gerade in Spotify läuft, und steuert die Wiedergabe.</string>
     <key>NSCalendarsFullAccessUsageDescription</key><string>Richy zeigt deinen nächsten Termin in der Notch und im StandBy-Modus.</string>
     <key>NSBluetoothAlwaysUsageDescription</key><string>Richy zeigt an, wenn sich Kopfhörer wie AirPods verbinden.</string>
+    <key>NSAudioCaptureUsageDescription</key><string>Richy stellt die Lautstärke einzelner Apps ein, wenn du die Lautstärke pro App einschaltest. Der Ton wird nicht aufgenommen oder gespeichert.</string>
     <key>NSDownloadsFolderUsageDescription</key><string>Richy sortiert deinen Downloads-Ordner automatisch, wenn du den Aufräumer einschaltest.</string>
 </dict>
 </plist>
 PLIST
 
-# Nur lokal signiert. Ein selbst erstelltes Zertifikat hat macOS 27 für die Erlaubnis-Listen
-# (Bedienungshilfen usw.) nicht angenommen; dafür bräuchte es eine Developer ID von Apple.
-# Deshalb fragt macOS die Erlaubnisse nach jedem Neubau neu ab.
-codesign --force --sign - "$APP"
+# Mit einem Zertifikat von Apple („Apple Development“, kostenlos mit einer Apple-ID in Xcode,
+# oder „Developer ID“) erkennt macOS Richy an Team und Name. Erteilte Erlaubnisse bleiben dann
+# auch nach einem Neubau erhalten. Ohne Zertifikat wird nur lokal signiert; dann gelten die
+# Erlaubnisse nur für genau diesen Bau. Ein selbst erstelltes Zertifikat nimmt macOS dafür nicht an.
+IDENTITY=$(security find-identity -v -p codesigning | awk -F'"' '/"(Developer ID Application|Apple Development):/ { print $2; exit }')
+if [ -n "$IDENTITY" ]; then
+    codesign --force --sign "$IDENTITY" "$APP"
+    echo "Signiert mit: $IDENTITY"
+else
+    codesign --force --sign - "$APP"
+    echo "Nur lokal signiert (kein Apple-Zertifikat gefunden)"
+fi
 echo "Fertig: $APP"
 
 case "${1:-}" in

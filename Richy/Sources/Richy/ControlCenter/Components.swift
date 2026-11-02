@@ -1,9 +1,9 @@
 import SwiftUI
 
-/// Die sechs Funktionen mit Symbol, Farben und Beschreibung, wie sie in der
+/// Die Funktionen mit Symbol, Farben und Beschreibung, wie sie in der
 /// Kommandozentrale und im Menü erscheinen.
 enum Feature: String, CaseIterable, Identifiable {
-    case lockWidget, standBy, notch, windowFetcher, mouseWheel, downloads
+    case lockWidget, standBy, notch, windowFetcher, mouseWheel, appVolume, downloads
     var id: String { rawValue }
 
     var title: String {
@@ -13,6 +13,7 @@ enum Feature: String, CaseIterable, Identifiable {
         case .notch: "Notch Island"
         case .windowFetcher: "Fensterholer"
         case .mouseWheel: "Mausrad"
+        case .appVolume: "Lautstärke"
         case .downloads: "Downloads-Aufräumer"
         }
     }
@@ -24,6 +25,7 @@ enum Feature: String, CaseIterable, Identifiable {
         case .notch: "Musik, Screenshots, Ablage und mehr an der Notch."
         case .windowFetcher: "Cmd + Tab bringt immer ein Fenster nach vorne."
         case .mouseWheel: "Scrollen und Zoomen mit der Maus umkehren."
+        case .appVolume: "Eigene Lautstärke für jede App."
         case .downloads: "Sortiert neue Downloads nach Dateityp."
         }
     }
@@ -35,6 +37,7 @@ enum Feature: String, CaseIterable, Identifiable {
         case .notch: "capsule.tophalf.filled"
         case .windowFetcher: "macwindow.on.rectangle"
         case .mouseWheel: "computermouse"
+        case .appVolume: "speaker.wave.2"
         case .downloads: "tray.and.arrow.down"
         }
     }
@@ -44,6 +47,7 @@ enum Feature: String, CaseIterable, Identifiable {
         switch self {
         case .windowFetcher, .mouseWheel: .accessibility
         case .downloads: .downloads
+        case .appVolume: .audioCapture
         default: nil
         }
     }
@@ -55,6 +59,7 @@ enum Feature: String, CaseIterable, Identifiable {
         case .notch: Binding(get: { settings.notch }, set: { settings.notch = $0 })
         case .windowFetcher: Binding(get: { settings.windowFetcher }, set: { settings.windowFetcher = $0 })
         case .mouseWheel: Binding(get: { settings.mouseWheel }, set: { settings.mouseWheel = $0 })
+        case .appVolume: Binding(get: { settings.appVolume }, set: { settings.appVolume = $0 })
         case .downloads: Binding(get: { settings.downloadsCleaner }, set: { settings.downloadsCleaner = $0 })
         }
     }

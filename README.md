@@ -8,10 +8,14 @@ Funktion einzeln ein und aus:
 - **Notch Island**: Musik, Screenshots, Ablage, Termine, Timer und mehr an der Notch
 - **Fensterholer**: Cmd + Tab bringt immer ein Fenster nach vorne
 - **Mausrad**: kehrt Scrollen und Zoomen nur für die Maus um, das Trackpad bleibt unverändert
+- **Lautstärke**: eigene Lautstärke für jede App, wie unter Windows
 - **Downloads-Aufräumer**: sortiert neue Downloads nach Dateityp
 
+Ein Klick auf den Raben in der Menüleiste öffnet ein kleines Fenster mit allen Funktionen
+(per Ziehen umsortierbar) und einer Leistungsanzeige mit CPU und Arbeitsspeicher von Richy.
+
 Ausgeschaltete Funktionen laufen gar nicht. Alles andere reagiert auf Meldungen von macOS,
-statt regelmäßig nachzusehen.
+statt regelmäßig nachzusehen. Gemessen mit laufender Musik: etwa 0,2 % CPU und 25 MB.
 
 ```bash
 cd Richy
@@ -21,10 +25,13 @@ cd Richy
 
 ## Gut zu wissen
 
-- Die App ist nur lokal signiert. Nach jedem Neubau fragt macOS die Erlaubnisse
-  (Bedienungshilfen, Bildschirmaufnahme, Spotify, Kalender …) neu ab. Ein selbst erstelltes
-  Signatur-Zertifikat hat macOS für die Erlaubnis-Listen nicht angenommen; dauerhaft lösen
-  ließe sich das nur mit einer Developer ID von Apple.
+- `build.sh` signiert mit einem Zertifikat von Apple, wenn eins im Schlüsselbund liegt
+  („Apple Development“, kostenlos über eine Apple-ID in Xcode → Settings → Accounts →
+  Manage Certificates). Dann bleiben die Erlaubnisse (Bedienungshilfen, Spotify, Kalender …)
+  auch nach einem Neubau oder Update erhalten. Ohne Zertifikat wird nur lokal signiert, und
+  macOS fragt nach jedem Neubau neu. Ein selbst erstelltes Zertifikat nimmt macOS dafür nicht an.
+- Zum Signieren braucht macOS außerdem Apples Zwischenzertifikat „WWDR G3“
+  (apple.com/certificateauthority), falls Xcode es nicht selbst abgelegt hat.
 - Widgets, StandBy und Teile der Notch nutzen inoffizielle macOS-Funktionen
   (SkyLight, login.framework). Nach großen macOS-Updates prüfen.
 - Das Wetter kommt von [Open-Meteo](https://open-meteo.com); gesendet wird nur der eingetragene Ort.

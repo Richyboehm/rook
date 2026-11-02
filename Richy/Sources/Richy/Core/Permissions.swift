@@ -9,7 +9,7 @@ import EventKit
 @MainActor
 final class Permissions: NSObject, ObservableObject, CBCentralManagerDelegate {
     enum Kind: String, CaseIterable, Identifiable {
-        case spotify, accessibility, screenRecording, calendar, bluetooth, downloads
+        case spotify, accessibility, screenRecording, audioCapture, calendar, bluetooth, downloads
         var id: String { rawValue }
 
         var title: String {
@@ -17,6 +17,7 @@ final class Permissions: NSObject, ObservableObject, CBCentralManagerDelegate {
             case .spotify: "Spotify steuern"
             case .accessibility: "Bedienungshilfen"
             case .screenRecording: "Bildschirmaufnahme"
+            case .audioCapture: "Audio-Aufnahme"
             case .calendar: "Kalender"
             case .bluetooth: "Bluetooth"
             case .downloads: "Downloads-Ordner"
@@ -28,6 +29,7 @@ final class Permissions: NSObject, ObservableObject, CBCentralManagerDelegate {
             case .spotify: "music.note"
             case .accessibility: "accessibility"
             case .screenRecording: "rectangle.dashed.badge.record"
+            case .audioCapture: "waveform"
             case .calendar: "calendar"
             case .bluetooth: "airpods"
             case .downloads: "arrow.down.circle"
@@ -40,6 +42,7 @@ final class Permissions: NSObject, ObservableObject, CBCentralManagerDelegate {
             case .spotify: "Musik auf Sperrbildschirm, StandBy und Notch"
             case .accessibility: "Fensterholer (Cmd + Tab) und Mausrad"
             case .screenRecording: "Screenshots aus der Notch"
+            case .audioCapture: "Lautstärke pro App"
             case .calendar: "Termine in Notch und StandBy"
             case .bluetooth: "AirPods-Anzeige in der Notch"
             case .downloads: "Downloads-Aufräumer"
@@ -52,6 +55,7 @@ final class Permissions: NSObject, ObservableObject, CBCentralManagerDelegate {
             case .spotify: "Privacy_Automation"
             case .accessibility: "Privacy_Accessibility"
             case .screenRecording: "Privacy_ScreenCapture"
+            case .audioCapture: "Privacy_AudioCapture"
             case .calendar: "Privacy_Calendars"
             case .bluetooth: "Privacy_Bluetooth"
             case .downloads: "Privacy_FilesAndFolders"
@@ -72,6 +76,11 @@ final class Permissions: NSObject, ObservableObject, CBCentralManagerDelegate {
     func refresh() {
         status[.accessibility] = AXIsProcessTrusted() ? .granted : .notDetermined
         status[.screenRecording] = CGPreflightScreenCaptureAccess() ? .granted : .notDetermined
+        status[.audioCapture] = switch TCC.preflight("kTCCServiceAudioCapture") {
+        case 0: .granted
+        case 1: .denied
+        default: .notDetermined
+        }
         status[.calendar] = switch EKEventStore.authorizationStatus(for: .event) {
         case .fullAccess: .granted
         case .notDetermined: .notDetermined
@@ -99,6 +108,11 @@ final class Permissions: NSObject, ObservableObject, CBCentralManagerDelegate {
             if !AXIsProcessTrustedWithOptions(prompt) { openSettings(kind) }
         case .screenRecording:
             if !CGRequestScreenCaptureAccess() { openSettings(kind) }
+        case .audioCapture:
+            if status[kind] == .denied { return openSettings(kind) }
+            TCC.request("kTCCServiceAudioCapture") { _ in
+                DispatchQueue.main.async { MainActor.assumeIsolated { self.refresh() } }
+            }
         case .calendar:
             if status[kind] == .denied { return openSettings(kind) }
             EKEventStore().requestFullAccessToEvents { _, _ in
@@ -149,5 +163,24 @@ final class Permissions: NSObject, ObservableObject, CBCentralManagerDelegate {
             bluetoothManager = nil
             refresh()
         }
+    }
+}
+
+/// Für „Audio-Aufnahme“ gibt es keine öffentliche Abfrage; Apple nutzt dafür die privaten
+/// Funktionen von TCC. Fehlen sie, gilt die Erlaubnis als noch nicht erteilt.
+private enum TCC {
+    private typealias Preflight = @convention(c) (CFString, CFDictionary?) -> Int32
+    private typealias Request = @convention(c) (CFString, CFDictionary?, @escaping @convention(block) (Bool) -> Void) -> Void
+    nonisolated(unsafe) private static let framework = dlopen("/System/Library/PrivateFrameworks/TCC.framework/Versions/A/TCC", RTLD_NOW)
+
+    /// 0 = erlaubt, 1 = abgelehnt, 2 = noch nicht gefragt
+    static func preflight(_ service: String) -> Int32 {
+        guard let symbol = dlsym(framework, "TCCAccessPreflight") else { return 2 }
+        return unsafeBitCast(symbol, to: Preflight.self)(service as CFString, nil)
+    }
+
+    static func request(_ service: String, _ done: @escaping (Bool) -> Void) {
+        guard let symbol = dlsym(framework, "TCCAccessRequest") else { return done(false) }
+        unsafeBitCast(symbol, to: Request.self)(service as CFString, nil, done)
     }
 }

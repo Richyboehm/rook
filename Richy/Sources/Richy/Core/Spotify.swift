@@ -30,12 +30,9 @@ final class Spotify: ObservableObject {
         didSet { if needsArtwork { ensureArtwork() } }
     }
 
-    nonisolated private static let bundleID = "com.spotify.client"
+    nonisolated static let bundleID = "com.spotify.client"
     nonisolated private static let separator = "\u{1F}"
     nonisolated private static let queue = DispatchQueue(label: "Richy.spotify")
-    /// Wird nur auf `queue` benutzt.
-    nonisolated(unsafe) private static var stateScript: NSAppleScript?
-
     private var querying = false
     private var loadedArtworkURL: URL?
     /// Titel, für den die Cover-Adresse schon erfragt wurde (verhindert Wiederholungen,
@@ -84,7 +81,7 @@ final class Spotify: ObservableObject {
         if !sameTrack { ensureArtwork() }
     }
 
-    // MARK: AppleScript (nur bei Bedarf)
+    // MARK: Apple Events (nur bei Bedarf)
 
     /// Fragt Spotify einmal komplett ab. Startet Spotify nie selbst.
     func query() {
@@ -102,38 +99,46 @@ final class Spotify: ObservableObject {
         }
     }
 
-    func playPause() { send("playpause") }
-    func next() { send("next track") }
-    func previous() { send("previous track") }
+    func playPause() { send { SpotifyEvents.command("PlPs") } }
+    func next() { send { SpotifyEvents.command("Next") } }
+    func previous() { send { SpotifyEvents.command("Prev") } }
 
-    /// Den neuen Stand liefert danach Spotifys eigene Meldung.
-    private func send(_ command: String) {
-        guard isRunning else { return }
-        let source = "tell application id \"\(Spotify.bundleID)\" to \(command)"
-        Spotify.queue.async {
-            var error: NSDictionary?
-            NSAppleScript(source: source)?.executeAndReturnError(&error)
-        }
+    /// Springt im Song an diese Stelle. Spotify meldet das nicht zurück, deshalb gleich selbst setzen.
+    func seek(to seconds: Double) {
+        let seconds = min(max(seconds, 0), track?.duration ?? seconds)
+        send { SpotifyEvents.set("pPos", to: NSAppleEventDescriptor(double: seconds)) }
+        position = seconds
+        positionDate = Date()
     }
 
+    /// Den neuen Stand liefert danach Spotifys eigene Meldung.
+    private func send(_ event: @escaping @Sendable () -> Void) {
+        guard isRunning else { return }
+        Spotify.queue.async(execute: event)
+    }
+
+    /// Fragt Stand und Titel ab und gibt sie im selben Format wie früher das AppleScript zurück.
     nonisolated private static func runStateScript() -> String? {
-        if stateScript == nil {
-            stateScript = NSAppleScript(source: """
-                tell application id "\(bundleID)"
-                    set s to player state as string
-                    if s is "stopped" then return "stopped"
-                    set t to current track
-                    set d to character id 31
-                    return s & d & (id of t) & d & (name of t) & d & (artist of t) & d & (album of t) & d & (artwork url of t) & d & ((duration of t) as string) & d & ((player position) as string)
-                end tell
-                """)
-        }
-        var error: NSDictionary?
-        guard let out = stateScript?.executeAndReturnError(&error).stringValue else {
-            Log.write("Spotify-Abfrage fehlgeschlagen: \(error?["NSAppleScriptErrorBriefMessage"] ?? "unbekannt")")
+        do {
+            let state = try SpotifyEvents.get(SpotifyEvents.property("pPlS"))
+            let stateName = switch state.enumCodeValue {
+            case SpotifyEvents.code("kPSP"): "playing"
+            case SpotifyEvents.code("kPSp"): "paused"
+            default: "stopped"
+            }
+            if stateName == "stopped" { return "stopped" }
+            let track = SpotifyEvents.property("pTrk")
+            func text(_ code: String) throws -> String {
+                try SpotifyEvents.get(SpotifyEvents.property(code, of: track)).stringValue ?? ""
+            }
+            let duration = try SpotifyEvents.get(SpotifyEvents.property("pDur", of: track)).int32Value
+            let position = try SpotifyEvents.get(SpotifyEvents.property("pPos")).doubleValue
+            return [stateName, try text("ID  "), try text("pnam"), try text("pArt"), try text("pAlb"), try text("aUrl"),
+                    String(duration), String(position)].joined(separator: separator)
+        } catch {
+            Log.write("Spotify-Abfrage fehlgeschlagen: \(error.localizedDescription)")
             return nil
         }
-        return out
     }
 
     private func apply(_ output: String?) {
@@ -198,5 +203,57 @@ final class Spotify: ObservableObject {
     private func clear() {
         if isPlaying { isPlaying = false }
         if track != nil { track = nil }
+    }
+}
+
+/// Spotify-Befehle als einzelne Apple Events statt als AppleScript. Gleiche Erlaubnis
+/// („Spotify steuern“), aber AppleScript muss nicht geladen werden; das spart rund 16 MB.
+/// Die Codes stehen in Spotifys Skript-Beschreibung (Spotify.sdef).
+enum SpotifyEvents {
+    static func code(_ text: String) -> FourCharCode {
+        text.utf8.reduce(0) { $0 << 8 | FourCharCode($1) }
+    }
+
+    /// Ein Befehl aus Spotifys eigener Sammlung, z. B. „PlPs“ für Play/Pause.
+    static func command(_ id: String) {
+        _ = try? send(event("spfy", id))
+    }
+
+    /// Eigenschaft der App (ohne `container`) oder eines Objekts, z. B. des aktuellen Titels.
+    static func property(_ id: String, of container: NSAppleEventDescriptor = .null()) -> NSAppleEventDescriptor {
+        let record = NSAppleEventDescriptor.record()
+        record.setDescriptor(NSAppleEventDescriptor(typeCode: code("prop")), forKeyword: AEKeyword(keyAEDesiredClass))
+        record.setDescriptor(NSAppleEventDescriptor(enumCode: code("prop")), forKeyword: AEKeyword(keyAEKeyForm))
+        record.setDescriptor(NSAppleEventDescriptor(typeCode: code(id)), forKeyword: AEKeyword(keyAEKeyData))
+        record.setDescriptor(container, forKeyword: AEKeyword(keyAEContainer))
+        return record.coerce(toDescriptorType: DescType(typeObjectSpecifier)) ?? record
+    }
+
+    static func get(_ specifier: NSAppleEventDescriptor) throws -> NSAppleEventDescriptor {
+        let event = event("core", "getd")
+        event.setParam(specifier, forKeyword: AEKeyword(keyDirectObject))
+        return try send(event).paramDescriptor(forKeyword: AEKeyword(keyDirectObject)) ?? .null()
+    }
+
+    static func set(_ id: String, to value: NSAppleEventDescriptor) {
+        let event = event("core", "setd")
+        event.setParam(property(id), forKeyword: AEKeyword(keyDirectObject))
+        event.setParam(value, forKeyword: AEKeyword(keyAEData))
+        _ = try? send(event)
+    }
+
+    private static func event(_ eventClass: String, _ id: String) -> NSAppleEventDescriptor {
+        NSAppleEventDescriptor(eventClass: code(eventClass), eventID: code(id),
+                               targetDescriptor: NSAppleEventDescriptor(bundleIdentifier: Spotify.bundleID),
+                               returnID: AEReturnID(kAutoGenerateReturnID), transactionID: AETransactionID(kAnyTransactionID))
+    }
+
+    /// Wartet auf die Antwort; Fehler von Spotify (z. B. kein Titel) werden zu `throw`.
+    private static func send(_ event: NSAppleEventDescriptor) throws -> NSAppleEventDescriptor {
+        let reply = try event.sendEvent(options: [.waitForReply, .canInteract], timeout: 5)
+        if let number = reply.paramDescriptor(forKeyword: AEKeyword(keyErrorNumber))?.int32Value, number != 0 {
+            throw NSError(domain: NSOSStatusErrorDomain, code: Int(number))
+        }
+        return reply
     }
 }
