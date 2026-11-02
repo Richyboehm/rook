@@ -60,7 +60,7 @@ final class MenuBarPanel: NSObject {
 
     private func makeView() -> some View {
         MenuBarView(settings: state.settings, permissions: state.permissions, downloads: state.downloads,
-                    intro: intro, state: state,
+                    intro: intro, rookSearch: state.rookSearch, updater: state.updater, state: state,
                     openSettings: { [weak self] feature in self?.close(); self?.openSettings(feature) },
                     close: { [weak self] in self?.close() })
     }
@@ -149,6 +149,8 @@ struct MenuBarView: View {
     @ObservedObject var permissions: Permissions
     @ObservedObject var downloads: DownloadsCleaner
     @ObservedObject var intro: IntroTrigger
+    @ObservedObject var rookSearch: RookSearch
+    @ObservedObject var updater: Updater
     let state: AppState
     let openSettings: (Feature?) -> Void
     let close: () -> Void
@@ -189,6 +191,11 @@ struct MenuBarView: View {
                 }
             }
             HStack(spacing: 8) {
+                if updater.updateAvailable || updater.isBusy {
+                    FooterButton(title: updater.isBusy ? "Lädt …" : "Update", symbol: "arrow.down.circle") {
+                        if !updater.isBusy { updater.install() }
+                    }
+                }
                 FooterButton(title: "Einstellungen", symbol: "gearshape") { openSettings(selected.feature) }
                 FooterButton(title: "Beenden", symbol: "power") { NSApp.terminate(nil) }
             }
@@ -401,6 +408,24 @@ struct MenuBarView: View {
                 close()
                 NSWorkspace.shared.open(DownloadsCleaner.downloads)
             }
+        case .rookSearch:
+            Group {
+                if rookSearch.waitingForQuit {
+                    Text("Neue Version kommt, sobald Rook Search beendet wird.")
+                } else if let problem = rookSearch.problem {
+                    Text(problem)
+                } else {
+                    Text("Liegt in Programme und wird mit Rook aktualisiert.")
+                }
+            }
+            .font(.system(size: 10))
+            .foregroundStyle(.tertiary)
+            .fixedSize(horizontal: false, vertical: true)
+            Pill(title: "Rook Search öffnen", symbol: "globe", wide: true) {
+                close()
+                rookSearch.open()
+            }
+            .disabled(!rookSearch.isInstalled)
         }
     }
 }

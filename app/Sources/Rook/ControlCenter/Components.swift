@@ -3,7 +3,7 @@ import SwiftUI
 /// Die Funktionen mit Symbol, Farben und Beschreibung, wie sie in der
 /// Kommandozentrale und im Menü erscheinen.
 enum Feature: String, CaseIterable, Identifiable {
-    case lockWidget, standBy, notch, windowFetcher, dockToggle, mouseWheel, appVolume, downloads
+    case lockWidget, standBy, notch, windowFetcher, dockToggle, mouseWheel, appVolume, downloads, rookSearch
     var id: String { rawValue }
 
     var title: String {
@@ -16,6 +16,7 @@ enum Feature: String, CaseIterable, Identifiable {
         case .mouseWheel: "Mausrad"
         case .appVolume: "Lautstärke"
         case .downloads: "Downloads-Aufräumer"
+        case .rookSearch: "Rook Search"
         }
     }
 
@@ -29,6 +30,7 @@ enum Feature: String, CaseIterable, Identifiable {
         case .mouseWheel: "Scrollen und Zoomen mit der Maus umkehren."
         case .appVolume: "Eigene Lautstärke für jede App."
         case .downloads: "Sortiert neue Downloads nach Dateityp."
+        case .rookSearch: "Der Browser dazu, mit Werbeblocker und ruhiger Startseite."
         }
     }
 
@@ -42,6 +44,7 @@ enum Feature: String, CaseIterable, Identifiable {
         case .mouseWheel: "computermouse"
         case .appVolume: "speaker.wave.2"
         case .downloads: "tray.and.arrow.down"
+        case .rookSearch: "globe"
         }
     }
 
@@ -65,6 +68,7 @@ enum Feature: String, CaseIterable, Identifiable {
         case .mouseWheel: Binding(get: { settings.mouseWheel }, set: { settings.mouseWheel = $0 })
         case .appVolume: Binding(get: { settings.appVolume }, set: { settings.appVolume = $0 })
         case .downloads: Binding(get: { settings.downloadsCleaner }, set: { settings.downloadsCleaner = $0 })
+        case .rookSearch: Binding(get: { settings.rookSearch }, set: { settings.rookSearch = $0 })
         }
     }
 }

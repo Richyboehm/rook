@@ -19,7 +19,8 @@ final class AppState {
     let mouseWheel = MouseWheel()
     let volume = AppVolume()
     let resources = ResourceMonitor()
-    let rookSearch = RookSearchInstaller()
+    let rookSearch = RookSearch()
+    let updater = Updater()
     let downloads = DownloadsCleaner()
     let weather = WeatherService()
 
@@ -114,6 +115,15 @@ final class AppState {
                 self?.downloads.stop()
             }
         }.store(in: &cancellables)
+
+        // Rook Search: Wurde der Browser von Hand gelöscht, ist die Funktion aus. Sonst beim Start
+        // auf die Version bringen, die in diesem Rook steckt; beim Umschalten ablegen oder wegräumen.
+        if settings.rookSearch && !rookSearch.isInstalled { settings.rookSearch = false }
+        if settings.rookSearch { rookSearch.updateIfNeeded() }
+        settings.$rookSearch.dropFirst().removeDuplicates().sink { [weak self] on in
+            if on { self?.rookSearch.place() } else { self?.rookSearch.remove() }
+        }.store(in: &cancellables)
+        updater.start()
 
         // Was gerade gebraucht wird (Cover laden, Kalender beobachten), hängt von vielen
         // Schaltern ab; nach jeder Änderung einmal neu bestimmen.

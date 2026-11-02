@@ -25,6 +25,12 @@ cp Rook.icns "$APP/Contents/Resources/"
 # The start page is the same one that runs on the website.
 cp -R ../index.html ../style.css ../app.js ../assets ../backgrounds "$APP/Contents/Resources/start/"
 
+# Im Bau von Rook bekommt der Browser dieselbe Version wie Rook.
+if [ -n "${ROOK_VERSION:-}" ]; then
+  plutil -replace CFBundleShortVersionString -string "$ROOK_VERSION" "$APP/Contents/Info.plist"
+  plutil -replace CFBundleVersion -string "$ROOK_BUILD" "$APP/Contents/Info.plist"
+fi
+
 # Mit einem Zertifikat von Apple („Apple Development“ oder „Developer ID“) erkennt macOS die App
 # an Team und Name: Erlaubnisse (Downloads-Ordner, Kamera, Mikrofon) bleiben über Updates erhalten,
 # und Rook kann vor einem Update prüfen, dass die neue Version wirklich von hier stammt.

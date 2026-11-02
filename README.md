@@ -108,8 +108,8 @@ Then move `Rook Search.app` into your Applications folder. Because you built it 
 
 ### Download page
 
-The page in `download/` (online at https://richyboehm.github.io/rook/download/) offers `download/Rook-Search.dmg` (https://richyboehm.github.io/rook/download/Rook-Search.dmg).
-After a change to the app, run `browser/build.sh`, then `browser/make-dmg.sh`, and commit the new `Rook-Search.dmg`.
+The page in `download/` (online at https://richyboehm.github.io/rook/download/) offers one download, `download/Rook.zip`. Rook Search is built into it (`Rook.app/Contents/Helpers`) and is turned on in Rook like any other feature.
+To publish, raise `BUILD` in `app/build.sh`, run `app/build.sh release` (builds the browser too and writes `download/Rook.zip` and `download/Rook.json`), and commit both files. Rook checks `Rook.json` once a day and updates itself and the browser in one step, but only if the new version is signed with the same Apple certificate.
 
 ## Keyboard shortcuts
 

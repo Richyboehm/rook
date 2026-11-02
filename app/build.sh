@@ -3,19 +3,28 @@
 #
 #   ./build.sh           nur bauen
 #   ./build.sh install   nach /Applications installieren und starten
-#   ./build.sh zip       zusätzlich ein ZIP zum Weitergeben erzeugen
+#   ./build.sh release   für die Download-Seite: download/Rook.zip und download/Rook.json
+#
+# Rook Search (der Browser in ../browser) wird mitgebaut und steckt in Rook unter
+# Contents/Helpers. Beide tragen dieselbe Version; ein Update bringt immer beides.
 set -euo pipefail
 cd "$(dirname "$0")"
 
+# Die eine Version von Rook. BUILD bei jeder Veröffentlichung um eins erhöhen.
+VERSION="1.1"
+BUILD="4"
+
 swift build -c release
+ROOK_VERSION="$VERSION" ROOK_BUILD="$BUILD" ../browser/build.sh
 
 APP="build/Rook.app"
 rm -rf "$APP"
-mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
+mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources" "$APP/Contents/Helpers"
 cp .build/release/Rook "$APP/Contents/MacOS/Rook"
 cp Resources/AppIcon.icns Resources/MenuBarIcon.png Resources/MenuBarIcon@2x.png "$APP/Contents/Resources/"
+ditto "../browser/build/Rook Search.app" "$APP/Contents/Helpers/Rook Search.app"
 
-cat > "$APP/Contents/Info.plist" <<'PLIST'
+cat > "$APP/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -26,8 +35,8 @@ cat > "$APP/Contents/Info.plist" <<'PLIST'
     <key>CFBundleExecutable</key><string>Rook</string>
     <key>CFBundleIconFile</key><string>AppIcon</string>
     <key>CFBundlePackageType</key><string>APPL</string>
-    <key>CFBundleShortVersionString</key><string>1.1</string>
-    <key>CFBundleVersion</key><string>2</string>
+    <key>CFBundleShortVersionString</key><string>$VERSION</string>
+    <key>CFBundleVersion</key><string>$BUILD</string>
     <key>LSMinimumSystemVersion</key><string>26.0</string>
     <key>LSUIElement</key><true/>
     <key>LSApplicationCategoryType</key><string>public.app-category.utilities</string>
@@ -72,8 +81,9 @@ install)
     open "$TARGET"
     echo "Installiert und gestartet: $TARGET"
     ;;
-zip)
-    ditto -c -k --keepParent "$APP" "build/Rook.zip"
-    echo "Zum Weitergeben: build/Rook.zip"
+release)
+    ditto -c -k --keepParent "$APP" "../download/Rook.zip"
+    printf '{ "version": "%s", "build": %s }\n' "$VERSION" "$BUILD" > ../download/Rook.json
+    echo "Für die Download-Seite: download/Rook.zip ($(du -h ../download/Rook.zip | cut -f1)), Version $VERSION ($BUILD)"
     ;;
 esac

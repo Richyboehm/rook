@@ -12,6 +12,8 @@ struct ControlCenterView: View {
     @ObservedObject var permissions: Permissions
     @ObservedObject var downloads: DownloadsCleaner
     @ObservedObject var weather: WeatherService
+    @ObservedObject var rookSearch: RookSearch
+    @ObservedObject var updater: Updater
     let state: AppState
     @State private var page: Page = .overview
 
@@ -58,6 +60,7 @@ struct ControlCenterView: View {
         case .feature(.mouseWheel): mouseWheelPage
         case .feature(.appVolume): appVolumePage
         case .feature(.downloads): downloadsPage
+        case .feature(.rookSearch): rookSearchPage
         case .permissions: permissionsPage
         case .general: generalPage
         }
@@ -78,12 +81,11 @@ struct ControlCenterView: View {
                     Text("Alle Funktionen auf einen Blick.").foregroundStyle(.secondary)
                 }
             }
+            UpdateRow(updater: updater)
 
             LazyVGrid(columns: [GridItem(.flexible(), spacing: 14), GridItem(.flexible(), spacing: 14)], spacing: 14) {
                 ForEach(Feature.allCases) { featureCard($0) }
             }
-
-            RookSearchCard(installer: state.rookSearch)
 
             let missing = Permissions.Kind.allCases.filter { permissions.status[$0] != .granted }.count
             if missing > 0 {
@@ -382,6 +384,18 @@ struct ControlCenterView: View {
         }
     }
 
+    // MARK: Rook Search
+
+    private var rookSearchPage: some View {
+        let feature = Feature.rookSearch
+        return VStack(alignment: .leading, spacing: 20) {
+            PageHeader(symbol: feature.symbol, title: feature.title,
+                       text: "Der Browser von Rook: Safari-Engine, Werbeblocker eingebaut, Tab-Gruppen wie in Safari, deine Daten bleiben auf dem Mac. Eingeschaltet liegt er in Programme und kann dein Standardbrowser sein.",
+                       isOn: feature.isOn(settings))
+            RookSearchCard(rookSearch: rookSearch, isOn: settings.rookSearch)
+        }
+    }
+
     // MARK: Erlaubnisse
 
     private var permissionsPage: some View {
@@ -416,9 +430,14 @@ struct ControlCenterView: View {
                         .padding(.leading, 34)
                 }
             }
-            HStack {
-                Text("Version \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "–")")
+            Card(title: "Updates") {
+                UpdateRow(updater: updater)
+                Text("Rook schaut einmal am Tag nach einer neuen Version. Rook Search kommt dabei mit. Installiert wird nur, was mit dem Zertifikat von Rook signiert ist; Erlaubnisse bleiben erhalten.")
+                    .font(.callout)
                     .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            HStack {
                 Spacer()
                 Button("Rook beenden") { NSApp.terminate(nil) }
             }

@@ -75,6 +75,13 @@ final class Settings: ObservableObject {
         didSet { save("downloadsTrashInstallers", downloadsTrashInstallers) }
     }
 
+    // MARK: Rook Search (legt eine App nach Programme, deshalb erst nach bewusstem Einschalten;
+    // wer den Browser schon hat, behält ihn)
+
+    @Published var rookSearch: Bool = load("rookSearch", FileManager.default.fileExists(atPath: RookSearch.target.path)) {
+        didSet { save("rookSearch", rookSearch) }
+    }
+
     // MARK: Allgemein
 
     @Published var debugLog: Bool = load("debugLog", false) { didSet { save("debugLog", debugLog) } }
