@@ -25,5 +25,16 @@ cp Rook.icns "$APP/Contents/Resources/"
 # The start page is the same one that runs on the website.
 cp -R ../index.html ../style.css ../app.js ../assets ../backgrounds "$APP/Contents/Resources/start/"
 
-codesign --force --sign - "$APP"
+# Mit einem Zertifikat von Apple („Apple Development“ oder „Developer ID“) erkennt macOS die App
+# an Team und Name: Erlaubnisse (Downloads-Ordner, Kamera, Mikrofon) bleiben über Updates erhalten,
+# und Rook kann vor einem Update prüfen, dass die neue Version wirklich von hier stammt.
+# Ohne Zertifikat wird nur lokal signiert; dann gelten Erlaubnisse nur für genau diesen Bau.
+IDENTITY=$(security find-identity -v -p codesigning | awk -F'"' '/"(Developer ID Application|Apple Development):/ { print $2; exit }')
+if [ -n "$IDENTITY" ]; then
+  codesign --force --sign "$IDENTITY" "$APP"
+  echo "Signiert mit: $IDENTITY"
+else
+  codesign --force --sign - "$APP"
+  echo "Nur lokal signiert (kein Apple-Zertifikat gefunden)"
+fi
 echo "Fertig: $(pwd)/$APP"

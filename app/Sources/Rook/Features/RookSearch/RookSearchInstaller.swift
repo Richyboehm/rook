@@ -1,8 +1,11 @@
 import AppKit
+import Security
 
 /// Lädt den Browser Rook Search von der Download-Seite und legt ihn in den Ordner Programme.
-/// Die App bekommt dabei dieselbe Markierung „aus dem Internet“ wie bei einem normalen
-/// Download, damit macOS sie beim ersten Start genauso prüft.
+/// Ist die geladene App mit demselben Apple-Zertifikat signiert wie Rook selbst, ist sie geprüft
+/// echt und wird ohne Rückfrage von macOS installiert; mit demselben Zertifikat behält sie auch
+/// ihre Erlaubnisse. Sonst bekommt sie die Markierung „aus dem Internet“ wie bei einem normalen
+/// Download, damit macOS sie beim ersten Start prüft.
 @MainActor
 final class RookSearchInstaller: ObservableObject {
     enum Phase: Equatable {
@@ -23,7 +26,7 @@ final class RookSearchInstaller: ObservableObject {
         }
     }
 
-    static let bundleID = "de.richyboehm.rook"
+    nonisolated static let bundleID = "de.richyboehm.rook"
     static let download = URL(string: "https://richyboehm.github.io/rook/download/Rook-Search.dmg")!
     /// Liegt neben der DMG; `browser/make-dmg.sh` schreibt sie.
     static let latestInfo = URL(string: "https://richyboehm.github.io/rook/download/Rook-Search.json")!
@@ -159,10 +162,31 @@ final class RookSearchInstaller: ObservableObject {
             try? FileManager.default.removeItem(at: staging)
             return "Installieren fehlgeschlagen: \(error.localizedDescription)"
         }
+        if isSignedLikeRook(target) { return nil }
         // Wie bei einem Download im Browser: macOS prüft die App beim ersten Start.
         let stamp = String(Int(Date().timeIntervalSince1970), radix: 16)
         _ = run("/usr/bin/xattr", ["-w", "-r", "com.apple.quarantine", "0081;\(stamp);Rook;", target.path])
         return nil
+    }
+
+    /// Stammt die App nachweislich vom selben Team wie Rook (gleiche App-Kennung, Zertifikat von Apple)?
+    /// Wer die Download-Seite fälscht oder die Datei unterwegs austauscht, besteht das nicht.
+    nonisolated private static func isSignedLikeRook(_ app: URL) -> Bool {
+        guard let team = ownTeam, !team.isEmpty, team.allSatisfy({ $0.isLetter || $0.isNumber }) else { return false }
+        let requirement = "identifier \"\(bundleID)\" and anchor apple generic and certificate leaf[subject.OU] = \"\(team)\""
+        return run("/usr/bin/codesign", ["--verify", "--deep", "--strict", "-R", "=" + requirement, app.path])
+    }
+
+    /// Das Apple-Team, mit dem Rook selbst signiert ist; nil bei nur lokal signierten Bauten.
+    nonisolated private static var ownTeam: String? {
+        var code: SecCode?
+        var staticCode: SecStaticCode?
+        var info: CFDictionary?
+        guard SecCodeCopySelf([], &code) == errSecSuccess, let code,
+              SecCodeCopyStaticCode(code, [], &staticCode) == errSecSuccess, let staticCode,
+              SecCodeCopySigningInformation(staticCode, SecCSFlags(rawValue: kSecCSSigningInformation), &info) == errSecSuccess,
+              let info = info as? [String: Any] else { return nil }
+        return info[kSecCodeInfoTeamIdentifier as String] as? String
     }
 
     nonisolated private static func run(_ tool: String, _ arguments: [String]) -> Bool {
