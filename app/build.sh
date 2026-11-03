@@ -11,8 +11,8 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 # Die eine Version von Rook. BUILD bei jeder Veröffentlichung um eins erhöhen.
-VERSION="1.1"
-BUILD="4"
+VERSION="1.2"
+BUILD="5"
 
 swift build -c release
 ROOK_VERSION="$VERSION" ROOK_BUILD="$BUILD" ../browser/build.sh
