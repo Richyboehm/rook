@@ -32,8 +32,10 @@ final class IslandModel: ObservableObject {
     enum Live: Equatable { case timer, meeting, music }
 
     /// Seiten der aufgeklappten Notch, mit zwei Fingern im Kreis durchzuwischen.
+    /// In dieser Reihenfolge stehen auch die Punkte: Notiz links, die normale Seite in der Mitte,
+    /// Lautstärke rechts.
     enum Page: Int, CaseIterable {
-        case main, note, volume
+        case note, main, volume
     }
 
     /// Beim Zuklappen geht es immer zurück auf die normale Seite.

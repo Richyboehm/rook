@@ -6,7 +6,9 @@ Funktion einzeln ein und aus:
 - **Widgets** auf dem Sperrbildschirm: Musik (Spotify), nächster Termin, Wetter, Akku & AirPods
 - **StandBy**: große Uhr auf dem Sperrbildschirm, während der Mac lädt
 - **Notch Island**: Musik, Screenshots, Ablage, Termine und Timer an der Notch; mit zwei Fingern
-  dreht man wie auf einem Rad zur Schnellnotiz und zur Lautstärke pro App
+  dreht man wie auf einem Rad nach links zur Schnellnotiz und nach rechts zur Lautstärke pro App.
+  Bildschirme ohne Notch (z. B. ein externer Monitor) bekommen oben in der Mitte eine unsichtbare
+  Notch: Maus hin, und dieselbe Insel klappt dort auf
 - **Fensterholer**: Cmd + Tab bringt immer ein Fenster nach vorne
 - **Dock wie Windows**: nochmal aufs Dock-Symbol der vorderen App klicken minimiert ihre Fenster,
   der nächste Klick holt alle zurück

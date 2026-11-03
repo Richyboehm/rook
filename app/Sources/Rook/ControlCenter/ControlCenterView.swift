@@ -269,6 +269,10 @@ struct ControlCenterView: View {
                 OptionToggle(symbol: "lock.open", title: "Entsperren",
                              detail: "Kurzes Schloss-Symbol nach dem Entsperren.",
                              isOn: $settings.notchUnlock)
+                Divider()
+                OptionToggle(symbol: "display.2", title: "Andere Bildschirme",
+                             detail: "Unsichtbare Notch oben in der Mitte, z. B. auf einem externen Monitor. Maus hin, und die Notch klappt dort auf.",
+                             isOn: $settings.notchOtherScreens)
             }
             .disabled(!settings.notch || !NotchFeature.isAvailable)
             Card(title: "Erlaubnisse") {

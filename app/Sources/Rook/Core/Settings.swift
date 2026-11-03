@@ -47,6 +47,8 @@ final class Settings: ObservableObject {
     @Published var notchHeadphones: Bool = load("notchHeadphones", true) { didSet { save("notchHeadphones", notchHeadphones) } }
     @Published var notchCharging: Bool = load("notchCharging", true) { didSet { save("notchCharging", notchCharging) } }
     @Published var notchUnlock: Bool = load("notchUnlock", true) { didSet { save("notchUnlock", notchUnlock) } }
+    /// Unsichtbare Notch oben in der Mitte von Bildschirmen ohne echte Notch (z. B. externer Monitor).
+    @Published var notchOtherScreens: Bool = load("notchOtherScreens", true) { didSet { save("notchOtherScreens", notchOtherScreens) } }
 
     // MARK: Fenster
 

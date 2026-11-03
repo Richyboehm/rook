@@ -366,6 +366,8 @@ struct MenuBarView: View {
             OptionRow(title: "Ablage", isOn: $settings.notchShelf)
             OptionRow(title: "Termine", isOn: $settings.notchCalendar)
             OptionRow(title: "Timer", isOn: $settings.notchTimer)
+            OptionRow(title: "Andere Bildschirme", caption: "Unsichtbare Notch, z. B. auf dem Monitor",
+                      isOn: $settings.notchOtherScreens)
             Divider()
             Disclosure(title: "Kurze Anzeigen", isExpanded: $notchExtras)
             if notchExtras {

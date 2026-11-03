@@ -10,8 +10,9 @@ final class NotchFeature {
     let model = IslandModel()
     var enabled = false { didSet { if enabled != oldValue { apply() } } }
 
-    /// Gibt es überhaupt einen Bildschirm mit Notch?
-    static var isAvailable: Bool { notchScreen() != nil }
+    /// Die Notch gibt es auf jedem Mac: an der echten Notch und, wenn eingeschaltet, unsichtbar
+    /// oben in der Mitte jedes anderen Bildschirms.
+    static var isAvailable: Bool { !NSScreen.screens.isEmpty }
 
     private let spotify: Spotify
     private let settings: Settings
@@ -29,6 +30,12 @@ final class NotchFeature {
     private var cancellables = Set<AnyCancellable>()
     private var peekWork: DispatchWorkItem?
     private var lastTrackID: String?
+    /// Unsichtbare Notches auf den Bildschirmen ohne echte Notch.
+    private var triggers: [NotchTrigger] = []
+    /// Bildschirm ohne Notch, auf dem die Insel gerade aufgeklappt ist; nil, wenn sie an der echten Notch sitzt.
+    private var borrowed: CGDirectDisplayID?
+    /// Zählt mit, damit ein altes Ausblenden nicht zurückspringt, wenn die Maus gleich wieder da ist.
+    private var fadeGeneration = 0
 
     private let windowSize = CGSize(width: 480, height: 470)
 
@@ -65,7 +72,10 @@ final class NotchFeature {
             .store(in: &cancellables)
         settings.$notchShelf.sink { [weak self] on in
             if on { self?.container.registerForDraggedTypes([.fileURL]) } else { self?.container.unregisterDraggedTypes() }
+            self?.triggers.forEach { $0.acceptsFiles(on) }
         }.store(in: &cancellables)
+        settings.$notchOtherScreens.dropFirst().sink { [weak self] _ in DispatchQueue.main.async { self?.apply() } }
+            .store(in: &cancellables)
         settings.$notchTimer.sink { [weak self] on in if !on { self?.model.stopTimer() } }.store(in: &cancellables)
 
         Screenshots.cleanUp()
@@ -103,6 +113,11 @@ final class NotchFeature {
             .store(in: &cancellables)
         model.$hovering.removeDuplicates()
             .sink { [weak self] hovering in self?.hoverChanged(hovering) }
+            .store(in: &cancellables)
+        // Auf einem Bildschirm ohne Notch verschwindet die Insel ganz, sobald sie zuklappt.
+        model.$hovering.combineLatest(model.$dragging)
+            .receive(on: RunLoop.main)
+            .sink { [weak self] hovering, dragging in if !hovering && !dragging { self?.leaveBorrowedScreen() } }
             .store(in: &cancellables)
         model.$page.removeDuplicates()
             .sink { [weak self] page in self?.allowKeyboard(page == .note) }
@@ -173,10 +188,17 @@ final class NotchFeature {
 
     private func apply() {
         if enabled, Self.isAvailable {
-            positionPanel()
-            panel.orderFrontRegardless()
+            updateTriggers()
+            // Bildschirme haben sich geändert: Die Insel geht zurück an die echte Notch.
+            if borrowed != nil {
+                model.hovering = false
+                model.dragging = false
+            }
+            returnHome()
         } else {
+            removeTriggers()
             panel.orderOut(nil)
+            borrowed = nil
             model.hovering = false
             endPeek()
         }
@@ -230,16 +252,113 @@ final class NotchFeature {
         panel.contentView = container
     }
 
-    /// Fenster oben mittig über der Notch.
-    private func positionPanel() {
-        guard let screen = Self.notchScreen(), let left = screen.auxiliaryTopLeftArea,
-              let right = screen.auxiliaryTopRightArea else { return }
-        let notchWidth = right.minX - left.maxX
-        model.notch = CGSize(width: notchWidth, height: screen.safeAreaInsets.top)
-        let midX = screen.frame.minX + left.maxX + notchWidth / 2
+    /// Größe der echten Notch; ohne MacBook-Bildschirm die übliche eines 14-Zoll-MacBook Pro.
+    private static var notchSize: CGSize {
+        guard let screen = notchScreen(), let left = screen.auxiliaryTopLeftArea,
+              let right = screen.auxiliaryTopRightArea else { return CGSize(width: 185, height: 32) }
+        return CGSize(width: right.minX - left.maxX, height: screen.safeAreaInsets.top)
+    }
+
+    private static func displayID(_ screen: NSScreen) -> CGDirectDisplayID? {
+        screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? CGDirectDisplayID
+    }
+
+    /// Fenster oben mittig über der Notch, bzw. über der Mitte eines Bildschirms ohne Notch.
+    /// Die Insel ist dort genau so groß wie an der echten Notch.
+    private func positionPanel(on screen: NSScreen) {
+        model.notch = Self.notchSize
+        var midX = screen.frame.midX
+        if let left = screen.auxiliaryTopLeftArea, let right = screen.auxiliaryTopRightArea {
+            midX = screen.frame.minX + (left.maxX + right.minX) / 2
+        }
         panel.setFrame(NSRect(x: midX - windowSize.width / 2, y: screen.frame.maxY - windowSize.height,
                               width: windowSize.width, height: windowSize.height), display: true)
         updateHotZone()
+    }
+
+    /// Zurück an die echte Notch. Ohne Bildschirm mit Notch (z. B. MacBook zugeklappt) wartet die
+    /// Insel unsichtbar, bis die Maus an eine der unsichtbaren Notches kommt.
+    private func returnHome() {
+        borrowed = nil
+        fadeGeneration += 1
+        panel.alphaValue = 1
+        if let screen = Self.notchScreen() {
+            positionPanel(on: screen)
+            panel.orderFrontRegardless()
+        } else {
+            panel.orderOut(nil)
+        }
+    }
+
+    // MARK: Unsichtbare Notch auf anderen Bildschirmen
+
+    private func updateTriggers() {
+        removeTriggers()
+        guard settings.notchOtherScreens else { return }
+        let home = Self.notchScreen().flatMap(Self.displayID)
+        let width = Self.notchSize.width
+        for screen in NSScreen.screens {
+            guard let id = Self.displayID(screen), id != home else { continue }
+            let trigger = NotchTrigger(displayID: id, level: panel.level)
+            trigger.acceptsFiles(settings.notchShelf)
+            trigger.onEnter = { [weak self] in self?.borrow(id, dragging: false) }
+            trigger.onDragEnter = { [weak self] in self?.borrow(id, dragging: true) }
+            trigger.onDragExit = { [weak self] in self?.dragLeftTrigger() }
+            trigger.onDrop = { [weak self] urls in self?.model.addToShelf(urls) }
+            trigger.place(on: screen, width: width)
+            triggers.append(trigger)
+        }
+    }
+
+    private func removeTriggers() {
+        triggers.forEach { $0.orderOut(nil) }
+        triggers.removeAll()
+    }
+
+    /// Maus oder Datei an der unsichtbaren Notch: Die Insel zieht auf diesen Bildschirm und klappt auf.
+    private func borrow(_ id: CGDirectDisplayID, dragging: Bool) {
+        guard enabled, let screen = NSScreen.screens.first(where: { Self.displayID($0) == id }) else { return }
+        // Schon offen (z. B. Maus kurz zurück, während sie ausblendet): nur wieder einblenden.
+        if borrowed == id {
+            fadeGeneration += 1
+            panel.alphaValue = 1
+        } else {
+            guard !model.hovering, !model.dragging else { return }
+            endPeek()
+            fadeGeneration += 1
+            borrowed = id
+            positionPanel(on: screen)
+            panel.alphaValue = 1
+            panel.orderFrontRegardless()
+        }
+        if dragging { model.dragging = true } else { model.hovering = true }
+    }
+
+    /// Eine gezogene Datei hat die unsichtbare Notch verlassen. Ist sie nicht auf der Insel
+    /// angekommen, die gerade darüber aufgeklappt ist, klappt die Insel wieder zu.
+    private func dragLeftTrigger() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { [weak self] in
+            MainActor.assumeIsolated {
+                guard let self, self.borrowed != nil, !self.container.dragInside else { return }
+                self.model.dragging = false
+            }
+        }
+    }
+
+    /// Zugeklappt auf einem Bildschirm ohne Notch: sanft ausblenden, dann zurück an die echte Notch.
+    private func leaveBorrowedScreen() {
+        guard borrowed != nil else { return }
+        fadeGeneration += 1
+        let generation = fadeGeneration
+        NSAnimationContext.runAnimationGroup({ context in
+            context.duration = 0.2
+            panel.animator().alphaValue = 0
+        }, completionHandler: { [weak self] in
+            MainActor.assumeIsolated {
+                guard let self, generation == self.fadeGeneration, !self.model.hovering, !self.model.dragging else { return }
+                self.returnHome()
+            }
+        })
     }
 
     private func updateHotZone() {
@@ -252,7 +371,9 @@ final class NotchFeature {
 
     /// Nur einblenden, wenn die Notch an ist und der jeweilige Bereich eingeschaltet.
     private func peek(_ kind: IslandModel.Peek) {
-        guard enabled, !model.hovering, !model.dragging, isAllowed(kind) else { return }
+        // Kurze Anzeigen nur an der echten Notch; auf anderen Bildschirmen bleibt die Notch unsichtbar.
+        guard enabled, !model.hovering, !model.dragging, borrowed == nil, Self.notchScreen() != nil,
+              isAllowed(kind) else { return }
         if model.page != .main { model.resetPage() }
         model.peek = kind
         peekWork?.cancel()
